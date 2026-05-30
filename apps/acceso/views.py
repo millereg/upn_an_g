@@ -1,62 +1,28 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import PermisoModulo
-from .forms import PermisoModuloForm
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login, logout
+from .forms import LoginForm
 
+def login_view(request):
+    form = LoginForm(request.POST or None)
 
-def permission_list(request):
-    permissions = PermisoModulo.objects.all()
+    if request.user.is_authenticated:
+        return redirect("dashboard:index")
 
-    return render(
-        request,
-        'acceso/permission_list.html',
-        {'permissions': permissions},
-    )
-
-def permission_create(request):
-    if request.method == 'POST':
-        form = PermisoModuloForm(request.POST)
-
+    if request.method == "POST":
         if form.is_valid():
-            form.save()
-            return redirect('acceso:permission_list')
+            username = form.cleaned_data["username"]
+            password = form.cleaned_data["password"]
 
-    else:
-        form = PermisoModuloForm()
+            user = authenticate(request, username=username, password=password)
 
-    return render(
-        request,
-        'acceso/permission_form.html',
-        {'form': form},
-    )
-
-def permission_update(request, id):
-    permission = get_object_or_404(PermisoModulo, id=id)
-
-    if request.method == 'POST':
-        form = PermisoModuloForm(request.POST, instance=permission)
-
-        if form.is_valid():
-            form.save()
-            return redirect('acceso:permission_list')
-
-    else:
-        form = PermisoModuloForm(instance=permission)
-
-    return render(
-        request,
-        'acceso/permission_form.html',
-        {'form': form}
-    )
+            if user is not None:
+                login(request, user)
+                return redirect("dashboard:index")
+            else:
+                form.add_error(None, "Credenciales inválidas")
+    return render(request, "acceso/login.html", {"form": form})
 
 
-def permission_delete(request, id):
-    permmission = get_object_or_404(PermisoModulo, id=id)
-    if request.method == 'POST':
-        permmission.delete()
-        return redirect('acceso:permission_list')
-
-    return render(
-        request,
-        'acceso/permission_confirm_delete.html',
-        {'permission': permmission},
-    )
+def logout_view(request):
+    logout(request)
+    return redirect("login")

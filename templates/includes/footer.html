@@ -1,0 +1,14 @@
+<footer class="sticky-footer bg-white">
+  <div class="container my-auto">
+    <div class="copyright text-center my-auto">
+      <span>Copyright &copy; Grupo 2 - UPN <span id="currentYear"></span></span>
+    </div>
+  </div>
+</footer>
+
+{% block js %}
+<script>
+  var currentYear = new Date().getFullYear();
+  document.getElementById("currentYear").textContent = currentYear;
+</script>
+{% endblock %}
