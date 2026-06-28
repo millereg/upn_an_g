@@ -27,7 +27,8 @@ class Movimiento(models.Model):
     ]
 
     tipo = models.CharField(max_length=15, choices=TIPO)
-    almacen = models.ForeignKey('sucursales.Almacen', on_delete=models.PROTECT)
+    almacen = models.ForeignKey('sucursales.Almacen', on_delete=models.PROTECT, related_name='movimientos_origen')
+    almacen_destino = models.ForeignKey('sucursales.Almacen', on_delete=models.PROTECT, related_name='movimientos_destino', null=True, blank=True)
     referencia = models.CharField(max_length=100)
     fecha = models.DateTimeField()
     estado = models.CharField(max_length=15, choices=ESTADO, default='pendiente')

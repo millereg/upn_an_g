@@ -1,0 +1,174 @@
+{% extends "base.html" %} {% load static %} {% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 mb-0 text-gray-800">
+    {% if sucursal %}Editar{% else %}Crear{% endif %} Sucursal
+  </h1>
+  <a
+    href="{% url 'sucursales:sucursal_list' %}"
+    class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm"
+  >
+    <i class="fas fa-arrow-left fa-sm text-white-50"></i> Volver
+  </a>
+</div>
+
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">
+      {% if sucursal %}Editar{% else %}Nueva{% endif %} Sucursal
+    </h6>
+  </div>
+  <div class="card-body">
+    <form method="POST">
+      {% csrf_token %}
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="id_nombre">Nombre</label>
+            {{ form.nombre }}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="id_codigo">Código</label>
+            {{ form.codigo }}
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="id_pais">País</label>
+            {{ form.pais }}
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="id_departamento">Departamento</label>
+            {{ form.departamento }}
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="id_provincia">Provincia</label>
+            {{ form.provincia }}
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="id_ciudad">Ciudad</label>
+            {{ form.ciudad }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="id_direccion">Dirección</label>
+        {{ form.direccion }}
+      </div>
+
+      <div class="form-group">
+        <label for="id_referencia">Referencia</label>
+        {{ form.referencia }}
+      </div>
+
+      <div class="row">
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="id_telefono">Teléfono</label>
+            {{ form.telefono }}
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="id_celular">Celular</label>
+            {{ form.celular }}
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="id_correo">Correo</label>
+            {{ form.correo }}
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="id_estado">Estado</label>
+            {{ form.estado }}
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save"></i> Guardar
+      </button>
+      <a href="{% url 'sucursales:sucursal_list' %}" class="btn btn-secondary"
+        >Cancelar</a
+      >
+    </form>
+  </div>
+</div>
+{% endblock %} {% block js %}
+<script>
+  const paisSelect = document.getElementById("id_pais");
+  const deptoSelect = document.getElementById("id_departamento");
+  const provSelect = document.getElementById("id_provincia");
+  const ciudadSelect = document.getElementById("id_ciudad");
+
+  function clearSelectOptions(select, placeholder) {
+    select.innerHTML = '<option value="">' + placeholder + "</option>";
+  }
+
+  function populateSelect(select, data, placeholder) {
+    clearSelectOptions(select, placeholder);
+    data.forEach((item) => {
+      const option = document.createElement("option");
+      option.value = item.id;
+      option.textContent = item.nombre;
+      select.appendChild(option);
+    });
+  }
+
+  paisSelect.addEventListener("change", function () {
+    const paisId = this.value;
+    clearSelectOptions(deptoSelect, "— Seleccione un departamento —");
+    clearSelectOptions(provSelect, "— Seleccione una provincia —");
+    clearSelectOptions(ciudadSelect, "— Seleccione una ciudad —");
+
+    if (paisId) {
+      fetch("/ubicacion/get-departamentos/?pais_id=" + paisId)
+        .then((response) => response.json())
+        .then((data) =>
+          populateSelect(deptoSelect, data, "— Seleccione un departamento —"),
+        );
+    }
+  });
+
+  deptoSelect.addEventListener("change", function () {
+    const deptoId = this.value;
+    clearSelectOptions(provSelect, "— Seleccione una provincia —");
+    clearSelectOptions(ciudadSelect, "— Seleccione una ciudad —");
+
+    if (deptoId) {
+      fetch("/ubicacion/get-provincias/?departamento_id=" + deptoId)
+        .then((response) => response.json())
+        .then((data) =>
+          populateSelect(provSelect, data, "— Seleccione una provincia —"),
+        );
+    }
+  });
+
+  provSelect.addEventListener("change", function () {
+    const provId = this.value;
+    clearSelectOptions(ciudadSelect, "— Seleccione una ciudad —");
+
+    if (provId) {
+      fetch("/ubicacion/get-ciudades/?provincia_id=" + provId)
+        .then((response) => response.json())
+        .then((data) =>
+          populateSelect(ciudadSelect, data, "— Seleccione una ciudad —"),
+        );
+    }
+  });
+</script>
+{% endblock %}

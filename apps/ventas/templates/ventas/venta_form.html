@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">{% if venta %}Editar{% else %}Nueva{% endif %} Venta</h1>
+    <a href="{% url 'ventas:venta_list' %}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+        <i class="fas fa-arrow-left fa-sm text-white-50"></i> Volver
+    </a>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">{% if venta %}Editar{% else %}Nueva{% endif %} Venta</h6>
+    </div>
+    <div class="card-body">
+        {% if form.errors or formset_errors %}
+        <div class="alert alert-danger">
+            <strong>Errores:</strong>
+            {{ form.errors }}
+            {{ formset_errors }}
+        </div>
+        {% endif %}
+        <form method="POST">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="id_sucursal">Sucursal</label>
+                        {{ form.sucursal }}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="id_almacen">Almacén</label>
+                        {{ form.almacen }}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="id_tipo_documento">Tipo Documento</label>
+                        {{ form.tipo_documento }}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="id_numero_documento">Número Documento</label>
+                        {{ form.numero_documento }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="id_estado">Estado</label>
+                {{ form.estado }}
+            </div>
+
+            <hr>
+            <h5>Detalle de Venta</h5>
+            {{ detalle_formset.management_form }}
+            <table class="table table-bordered" id="detalleTable">
+                <thead>
+                    <tr>
+                        <th>Lote</th>
+                        <th>Cantidad</th>
+                        <th>Precio</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for form in detalle_formset %}
+                    <tr>
+                        <td>{{ form.lote }}</td>
+                        <td>{{ form.cantidad }}</td>
+                        <td>{{ form.precio }}</td>
+                        <td>
+                            {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                            {% endfor %}
+                            {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Guardar
+            </button>
+            <a href="{% url 'ventas:venta_list' %}" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

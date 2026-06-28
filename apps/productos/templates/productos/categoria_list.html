@@ -1,4 +1,156 @@
 {% extends "base.html" %}
-{% block content %}
+{% load static %}
+{% load permisos_tags %}
 
+{% block css %}
+<link href="{% static 'vendor/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Categorías</h1>
+    {% has_perm user 'categorias' 'crear' as can_create %}
+    {% if can_create %}
+    <button type="button" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" data-toggle="modal" data-target="#categoriaModal">
+        <i class="fas fa-plus fa-sm text-white-50"></i> Crear Categoría
+    </button>
+    {% endif %}
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Listado de Categorías</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Estado</th>
+                        <th>Fecha Creación</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tfoot>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Estado</th>
+                        <th>Fecha Creación</th>
+                        <th>Acciones</th>
+                    </tr>
+                </tfoot>
+                <tbody>
+                    {% for categoria in categorias %}
+                    <tr>
+                        <td>{{ categoria.nombre }}</td>
+                        <td>
+                            {% if categoria.estado == 'activo' %}
+                                <span class="badge badge-success">Activo</span>
+                            {% else %}
+                                <span class="badge badge-secondary">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ categoria.fecha_creacion|date:"d/m/Y" }}</td>
+                        <td>
+                            {% has_perm user 'categorias' 'editar' as can_edit %}
+                            {% has_perm user 'categorias' 'eliminar' as can_delete %}
+                            {% if can_edit %}
+                            <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#categoriaModal" data-id="{{ categoria.id }}" data-nombre="{{ categoria.nombre }}" data-estado="{{ categoria.estado }}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            {% endif %}
+                            {% if can_delete %}
+                            <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteModal{{ categoria.id }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    {% if can_delete %}
+                    <div class="modal fade" id="deleteModal{{ categoria.id }}" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel{{ categoria.id }}" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="deleteModalLabel{{ categoria.id }}">Confirmar eliminación</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    ¿Estás seguro de eliminar la categoría <strong>{{ categoria.nombre }}</strong>?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                                    <form action="{% url 'productos:categoria_delete' categoria.id %}" method="POST" style="display:inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="categoriaModal" tabindex="-1" role="dialog" aria-labelledby="categoriaModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'productos:categoria_create' %}" id="categoriaForm">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="categoriaModalLabel">Crear Categoría</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    {{ form.as_p }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script src="{% static 'vendor/datatables/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        $('#dataTable').DataTable({
+            "language": {
+                "url": "https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
+            }
+        });
+    });
+
+    $('#categoriaModal').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        var id = button.data('id');
+        var modal = $(this);
+        if (id) {
+            modal.find('.modal-title').text('Editar Categoría');
+            modal.find('input[name="nombre"]').val(button.data('nombre'));
+            modal.find('select[name="estado"]').val(button.data('estado'));
+            modal.find('form').attr('action', '/productos/editar-categoria/' + id + '/');
+        } else {
+            modal.find('.modal-title').text('Crear Categoría');
+            modal.find('input[name="nombre"]').val('');
+            modal.find('select[name="estado"]').val('activo');
+            modal.find('form').attr('action', '/productos/crear-categoria/');
+        }
+    });
+</script>
 {% endblock %}

@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth.models import Group
 from .models import Modulo, TipoPermiso, PermisoModulo
 
 
@@ -28,6 +29,15 @@ class ModuloForm(forms.ModelForm):
             attrs={"class": "form-control", "placeholder": "Ej: ventas:lista"}
         ),
     )
+    grupo_menu = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Ej: Ventas, Configuración...",
+            }
+        ),
+    )
     orden = forms.IntegerField(
         widget=forms.NumberInput(
             attrs={"class": "form-control", "placeholder": "Orden en el menú..."}
@@ -46,30 +56,16 @@ class ModuloForm(forms.ModelForm):
 
     class Meta:
         model = Modulo
-        fields = ["nombre", "codigo", "icono", "url", "orden", "padre", "estado"]
-
-
-class TipoPermisoForm(forms.ModelForm):
-    nombre = forms.CharField(
-        widget=forms.TextInput(
-            attrs={"class": "form-control", "placeholder": "Ej: Ver Reportes"}
-        )
-    )
-    codigo = forms.SlugField(
-        widget=forms.TextInput(
-            attrs={"class": "form-control", "placeholder": "Ej: ver_reportes"}
-        )
-    )
-    orden = forms.IntegerField(
-        widget=forms.NumberInput(
-            attrs={"class": "form-control", "placeholder": "Orden..."}
-        )
-    )
-
-    class Meta:
-        model = TipoPermiso
-        fields = ["nombre", "codigo", "orden"]
-
+        fields = [
+            "nombre",
+            "codigo",
+            "icono",
+            "url",
+            "grupo_menu",
+            "orden",
+            "padre",
+            "estado",
+        ]
 
 class PermisoModuloForm(forms.ModelForm):
     grupo = forms.ModelChoiceField(
@@ -116,3 +112,15 @@ class LoginForm(forms.Form):
             }
         )
     )
+
+
+class GrupoForm(forms.ModelForm):
+    name = forms.CharField(
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": "Nombre del grupo..."}
+        )
+    )
+
+    class Meta:
+        model = Group
+        fields = ["name"]

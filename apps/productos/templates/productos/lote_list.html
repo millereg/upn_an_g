@@ -1,4 +1,177 @@
 {% extends "base.html" %}
-{% block content %}
+{% load static %}
+{% load permisos_tags %}
 
+{% block css %}
+<link href="{% static 'vendor/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Lotes</h1>
+    {% has_perm user 'lotes' 'crear' as can_create %}
+    {% if can_create %}
+    <button type="button" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" data-toggle="modal" data-target="#loteModal">
+        <i class="fas fa-plus fa-sm text-white-50"></i> Crear Lote
+    </button>
+    {% endif %}
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Listado de Lotes</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Número Lote</th>
+                        <th>Producto</th>
+                        <th>Proveedor</th>
+                        <th>Fecha Vencimiento</th>
+                        <th>Registro Sanitario</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tfoot>
+                    <tr>
+                        <th>Número Lote</th>
+                        <th>Producto</th>
+                        <th>Proveedor</th>
+                        <th>Fecha Vencimiento</th>
+                        <th>Registro Sanitario</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </tfoot>
+                <tbody>
+                    {% for lote in lotes %}
+                    <tr>
+                        <td>{{ lote.numero_lote }}</td>
+                        <td>{{ lote.producto.nombre }}</td>
+                        <td>{{ lote.proveedor.nombre }}</td>
+                        <td>{{ lote.fecha_vencimiento|date:"d/m/Y" }}</td>
+                        <td>{{ lote.registro_sanitario }}</td>
+                        <td>
+                            {% if lote.estado == 'activo' %}
+                                <span class="badge badge-success">Activo</span>
+                            {% elif lote.estado == 'vencido' %}
+                                <span class="badge badge-danger">Vencido</span>
+                            {% elif lote.estado == 'bloqueado' %}
+                                <span class="badge badge-warning">Bloqueado</span>
+                            {% elif lote.estado == 'cuarentena' %}
+                                <span class="badge badge-info">Cuarentena</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% has_perm user 'lotes' 'editar' as can_edit %}
+                            {% has_perm user 'lotes' 'eliminar' as can_delete %}
+                            {% if can_edit %}
+                            <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#loteModal" data-id="{{ lote.id }}" data-producto="{{ lote.producto.id }}" data-proveedor="{{ lote.proveedor.id }}" data-numero="{{ lote.numero_lote }}" data-fecha="{{ lote.fecha_vencimiento|date:'Y-m-d' }}" data-registro="{{ lote.registro_sanitario }}" data-estado="{{ lote.estado }}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            {% endif %}
+                            {% if can_delete %}
+                            <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteModal{{ lote.id }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    {% if can_delete %}
+                    <div class="modal fade" id="deleteModal{{ lote.id }}" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel{{ lote.id }}" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="deleteModalLabel{{ lote.id }}">Confirmar eliminación</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    ¿Estás seguro de eliminar el lote <strong>{{ lote.numero_lote }}</strong>?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                                    <form action="{% url 'productos:lote_delete' lote.id %}" method="POST" style="display:inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="loteModal" tabindex="-1" role="dialog" aria-labelledby="loteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'productos:lote_create' %}" id="loteForm">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="loteModalLabel">Crear Lote</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    {{ form.as_p }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script src="{% static 'vendor/datatables/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        $('#dataTable').DataTable({
+            "language": {
+                "url": "https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
+            }
+        });
+    });
+
+    $('#loteModal').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        var id = button.data('id');
+        var modal = $(this);
+        if (id) {
+            modal.find('.modal-title').text('Editar Lote');
+            modal.find('select[name="producto"]').val(button.data('producto'));
+            modal.find('select[name="proveedor"]').val(button.data('proveedor'));
+            modal.find('input[name="numero_lote"]').val(button.data('numero'));
+            modal.find('input[name="fecha_vencimiento"]').val(button.data('fecha'));
+            modal.find('input[name="registro_sanitario"]').val(button.data('registro'));
+            modal.find('select[name="estado"]').val(button.data('estado'));
+            modal.find('form').attr('action', '/productos/editar-lote/' + id + '/');
+        } else {
+            modal.find('.modal-title').text('Crear Lote');
+            modal.find('select[name="producto"]').val('');
+            modal.find('select[name="proveedor"]').val('');
+            modal.find('input[name="numero_lote"]').val('');
+            modal.find('input[name="fecha_vencimiento"]').val('');
+            modal.find('input[name="registro_sanitario"]').val('');
+            modal.find('select[name="estado"]').val('activo');
+            modal.find('form').attr('action', '/productos/crear-lote/');
+        }
+    });
+</script>
 {% endblock %}

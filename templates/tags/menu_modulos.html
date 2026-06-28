@@ -1,0 +1,32 @@
+{% load permisos_tags %}
+
+{% for grupo_menu, modulos in modulos_por_grupo.items %}
+  <hr class="sidebar-divider" />
+
+  {% if modulos|length == 1 %}
+    <li class="nav-item {% if modulos.0.codigo == 'dashboard' %}active{% endif %}">
+      <a class="nav-link" href="{% url modulos.0.url %}">
+        <i class="{{ modulos.0.icono }}"></i>
+        <span>{{ modulos.0.nombre }}</span>
+      </a>
+    </li>
+  {% else %}
+    {% with collapse_id=grupo_menu|slugify|add:"_collapse" %}
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#{{ collapse_id }}" aria-expanded="true">
+          <i class="{{ modulos.0.icono }}"></i>
+          <span>{{ grupo_menu }}</span>
+        </a>
+        <div id="{{ collapse_id }}" class="collapse" data-parent="#accordionSidebar">
+          <div class="bg-white py-2 collapse-inner rounded">
+            {% for modulo in modulos %}
+              {% if modulo.url %}
+                <a class="collapse-item" href="{% url modulo.url %}">{{ modulo.nombre }}</a>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </li>
+    {% endwith %}
+  {% endif %}
+{% endfor %}

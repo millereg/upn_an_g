@@ -18,6 +18,7 @@ class Venta(models.Model):
     ]
 
     sucursal = models.ForeignKey('sucursales.Sucursal', on_delete=models.PROTECT)
+    almacen = models.ForeignKey('sucursales.Almacen', on_delete=models.PROTECT, null=True, blank=True)
     tipo_documento = models.CharField(max_length=20, choices=TIPO_DOC)
     numero_documento = models.CharField(max_length=50)
     estado = models.CharField(max_length=15, choices=ESTADO, default='pendiente')

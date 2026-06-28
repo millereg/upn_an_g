@@ -41,6 +41,12 @@ class MovimientoForm(forms.ModelForm):
         widget=forms.Select(attrs={"class": "form-control"}),
         empty_label="— Seleccione un almacén —",
     )
+    almacen_destino = forms.ModelChoiceField(
+        queryset=None,
+        widget=forms.Select(attrs={"class": "form-control"}),
+        empty_label="— Seleccione almacén destino —",
+        required=False
+    )
     referencia = forms.CharField(
         widget=forms.TextInput(
             attrs={"class": "form-control", "placeholder": "Ingrese la referencia..."}
@@ -60,18 +66,14 @@ class MovimientoForm(forms.ModelForm):
         from apps.sucursales.models import Almacen
 
         self.fields["almacen"].queryset = Almacen.objects.all()
+        self.fields["almacen_destino"].queryset = Almacen.objects.all()
 
     class Meta:
         model = Movimiento
-        fields = ["tipo", "almacen", "referencia", "fecha", "estado"]
+        fields = ["tipo", "almacen", "almacen_destino", "referencia", "fecha", "estado"]
 
 
 class DetalleMovimientoForm(forms.ModelForm):
-    movimiento = forms.ModelChoiceField(
-        queryset=Movimiento.objects.all(),
-        widget=forms.Select(attrs={"class": "form-control"}),
-        empty_label="— Seleccione un movimiento —",
-    )
     lote = forms.ModelChoiceField(
         queryset=None,
         widget=forms.Select(attrs={"class": "form-control"}),
@@ -91,4 +93,4 @@ class DetalleMovimientoForm(forms.ModelForm):
 
     class Meta:
         model = DetalleMovimiento
-        fields = ["movimiento", "lote", "cantidad"]
+        fields = ["lote", "cantidad"]

@@ -17,6 +17,8 @@ class Modulo(models.Model):
                                help_text="Clase CSS del ícono, p.ej. 'bi bi-cart'")
     url     = models.CharField(max_length=200, blank=True,
                                help_text="Nombre de URL o ruta, p.ej. 'ventas:lista'")
+    grupo_menu = models.CharField(max_length=80, blank=True,
+                                help_text="Título de sección en el sidebar, p.ej. 'Ventas', 'Configuración'")
     orden   = models.PositiveSmallIntegerField(default=0,
                                               help_text="Orden en el menú")
     padre   = models.ForeignKey('self', null=True, blank=True,

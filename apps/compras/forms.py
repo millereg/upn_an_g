@@ -142,11 +142,6 @@ class CompraForm(forms.ModelForm):
 
 
 class DetalleCompraForm(forms.ModelForm):
-    compra = forms.ModelChoiceField(
-        queryset=Compra.objects.all(),
-        widget=forms.Select(attrs={"class": "form-control"}),
-        empty_label="— Seleccione una compra —",
-    )
     producto = forms.ModelChoiceField(
         queryset=None,
         widget=forms.Select(attrs={"class": "form-control"}),
@@ -177,4 +172,4 @@ class DetalleCompraForm(forms.ModelForm):
 
     class Meta:
         model = DetalleCompra
-        fields = ["compra", "producto", "lote", "cantidad", "precio"]
+        fields = ["producto", "lote", "cantidad", "precio"]

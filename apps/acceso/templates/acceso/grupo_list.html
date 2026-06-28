@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% load static %}
+{% load permisos_tags %}
+
+{% block css %}
+<link href="{% static 'vendor/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Grupos</h1>
+    {% has_perm user 'grupos' 'crear' as can_create %}
+    {% if can_create %}
+    <button type="button" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" data-toggle="modal" data-target="#grupoModal">
+        <i class="fas fa-plus fa-sm text-white-50"></i> Crear Grupo
+    </button>
+    {% endif %}
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Listado de Grupos</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Usuarios</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tfoot>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Usuarios</th>
+                        <th>Acciones</th>
+                    </tr>
+                </tfoot>
+                <tbody>
+                    {% for grupo in grupos %}
+                    <tr>
+                        <td>{{ grupo.name }}</td>
+                        <td>{{ grupo.user_set.count }}</td>
+                        <td>
+                            {% has_perm user 'grupos' 'editar' as can_edit %}
+                            {% has_perm user 'grupos' 'eliminar' as can_delete %}
+                            {% if can_edit %}
+                            <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#grupoModal" data-id="{{ grupo.id }}" data-nombre="{{ grupo.name }}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            {% endif %}
+                            {% if can_delete %}
+                            <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteModal{{ grupo.id }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    {% if can_delete %}
+                    <div class="modal fade" id="deleteModal{{ grupo.id }}" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel{{ grupo.id }}" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="deleteModalLabel{{ grupo.id }}">Confirmar eliminación</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    ¿Estás seguro de eliminar el grupo <strong>{{ grupo.name }}</strong>?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                                    <form action="{% url 'acceso:grupo_delete' grupo.id %}" method="POST" style="display:inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="grupoModal" tabindex="-1" role="dialog" aria-labelledby="grupoModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'acceso:grupo_create' %}" id="grupoForm">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="grupoModalLabel">Crear Grupo</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    {{ form.as_p }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script src="{% static 'vendor/datatables/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        $('#dataTable').DataTable({
+            "language": {
+                "url": "https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
+            }
+        });
+    });
+
+    $('#grupoModal').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        var id = button.data('id');
+        var modal = $(this);
+        if (id) {
+            modal.find('.modal-title').text('Editar Grupo');
+            modal.find('input[name="name"]').val(button.data('nombre'));
+            modal.find('form').attr('action', '/acceso/editar-grupo/' + id + '/');
+        } else {
+            modal.find('.modal-title').text('Crear Grupo');
+            modal.find('input[name="name"]').val('');
+            modal.find('form').attr('action', '/acceso/crear-grupo/');
+        }
+    });
+</script>
+{% endblock %}

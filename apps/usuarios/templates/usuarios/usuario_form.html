@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">{% if usuario_edit %}Editar{% else %}Crear{% endif %} Usuario</h1>
+    <a href="{% url 'usuarios:usuario_list' %}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+        <i class="fas fa-arrow-left fa-sm text-white-50"></i> Volver
+    </a>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">{% if usuario_edit %}Editar{% else %}Nuevo{% endif %} Usuario</h6>
+    </div>
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_username">Usuario</label>
+                        {{ user_form.username }}
+                        {% if usuario_edit %}<small class="form-text text-muted">El usuario no se puede cambiar</small>{% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_email">Email</label>
+                        {{ user_form.email }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_first_name">Nombre</label>
+                        {{ user_form.first_name }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_last_name">Apellido</label>
+                        {{ user_form.last_name }}
+                    </div>
+                </div>
+            </div>
+
+            {% if not usuario_edit %}
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_password1">Contraseña</label>
+                        {{ user_form.password1 }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_password2">Confirmar Contraseña</label>
+                        {{ user_form.password2 }}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_password">Nueva Contraseña</label>
+                        {{ user_form.password }}
+                        <small class="form-text text-muted">Dejar en blanco para no cambiar</small>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <hr>
+            <h5>Datos del Perfil</h5>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_sucursal">Sucursal</label>
+                        {{ perfil_form.sucursal }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_telefono">Teléfono</label>
+                        {{ perfil_form.telefono }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_celular">Celular</label>
+                        {{ perfil_form.celular }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_direccion">Dirección</label>
+                        {{ perfil_form.direccion }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="id_foto">Foto</label>
+                {{ perfil_form.foto }}
+            </div>
+
+            <div class="form-group">
+                <label for="id_groups">Grupos</label>
+                {{ user_form.groups }}
+            </div>
+
+            <div class="form-group">
+                <div class="form-check">
+                    {{ user_form.is_active }}
+                    <label class="form-check-label" for="id_is_active">Usuario Activo</label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Guardar
+            </button>
+            <a href="{% url 'usuarios:usuario_list' %}" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

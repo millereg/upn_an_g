@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">{% if movimiento %}Editar{% else %}Nuevo{% endif %} Movimiento</h1>
+    <a href="{% url 'inventario:movimiento_list' %}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+        <i class="fas fa-arrow-left fa-sm text-white-50"></i> Volver
+    </a>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">{% if movimiento %}Editar{% else %}Nuevo{% endif %} Movimiento</h6>
+    </div>
+    <div class="card-body">
+        {% if form.errors %}
+        <div class="alert alert-danger">
+            <strong>Errores en el formulario:</strong>
+            {{ form.errors }}
+        </div>
+        {% endif %}
+        {% if formset_errors %}
+        <div class="alert alert-danger">
+            <strong>Errores en detalles:</strong>
+            {{ formset_errors }}
+        </div>
+        {% endif %}
+        <form method="POST">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="id_tipo">Tipo</label>
+                        {{ form.tipo }}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="id_almacen">Almacén</label>
+                        {{ form.almacen }}
+                    </div>
+                </div>
+                <div class="col-md-3" id="almacen_destino_group" style="display:none;">
+                    <div class="form-group">
+                        <label for="id_almacen_destino">Almacén Destino</label>
+                        {{ form.almacen_destino }}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="id_referencia">Referencia</label>
+                        {{ form.referencia }}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="id_fecha">Fecha</label>
+                        {{ form.fecha }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" id="estado_group">
+                <label for="id_estado">Estado</label>
+                {{ form.estado }}
+            </div>
+
+            <hr>
+            <h5>Detalle de Movimiento</h5>
+            {{ detalle_formset.management_form }}
+            <table class="table table-bordered" id="detalleTable">
+                <thead>
+                    <tr>
+                        <th>Lote</th>
+                        <th>Cantidad</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for form in detalle_formset %}
+                    <tr>
+                        <td>{{ form.lote }}</td>
+                        <td>{{ form.cantidad }}</td>
+                        <td>
+                            {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                            {% endfor %}
+                            {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Guardar
+            </button>
+            <a href="{% url 'inventario:movimiento_list' %}" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>
+<script>
+    const tipoSelect = document.getElementById('id_tipo');
+    const almacenDestinoGroup = document.getElementById('almacen_destino_group');
+
+    tipoSelect.addEventListener('change', function() {
+        if (this.value === 'transferencia') {
+            almacenDestinoGroup.style.display = 'block';
+        } else {
+            almacenDestinoGroup.style.display = 'none';
+        }
+    });
+
+    if (tipoSelect.value === 'transferencia') {
+        almacenDestinoGroup.style.display = 'block';
+    }
+</script>
+{% endblock %}

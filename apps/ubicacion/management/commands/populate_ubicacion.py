@@ -1,17 +1,3 @@
-"""
-Comando de gestión: populate_ubicacion
-======================================
-Perú  → UBIGEO (ernestorivero/Ubigeo-Peru): jerarquía real 4 niveles
-          Departamento → Provincia → Distrito (Ciudad)
-Resto → dr5hn/countries-states-cities-database: 3 niveles
-          Departamento ← state, Provincia = Departamento, Ciudad ← city
-
-Uso:
-  python manage.py populate_ubicacion               ← todo el mundo
-  python manage.py populate_ubicacion --paises PE   ← solo Perú
-  python manage.py populate_ubicacion --paises PE US MX
-"""
-
 import gzip
 import io
 import json
@@ -26,13 +12,9 @@ GITHUB_RAW = (
     "/dr5hn/countries-states-cities-database/master/json"
 )
 GITHUB_RELEASES = (
-    "https://github.com/dr5hn/countries-states-cities-database"
-    "/releases/latest/download"
+    "https://github.com/dr5hn/countries-states-cities-database/releases/latest/download"
 )
-UBIGEO_RAW = (
-    "https://raw.githubusercontent.com"
-    "/ernestorivero/Ubigeo-Peru/master/json"
-)
+UBIGEO_RAW = "https://raw.githubusercontent.com/ernestorivero/Ubigeo-Peru/master/json"
 
 
 class Command(BaseCommand):
@@ -64,8 +46,8 @@ class Command(BaseCommand):
     def _importar_peru(self):
         self.stdout.write("⬇  [PE] Descargando UBIGEO Perú...")
         departamentos = self._fetch(f"{UBIGEO_RAW}/ubigeo_peru_2016_departamentos.json")
-        provincias    = self._fetch(f"{UBIGEO_RAW}/ubigeo_peru_2016_provincias.json")
-        distritos     = self._fetch(f"{UBIGEO_RAW}/ubigeo_peru_2016_distritos.json")
+        provincias = self._fetch(f"{UBIGEO_RAW}/ubigeo_peru_2016_provincias.json")
+        distritos = self._fetch(f"{UBIGEO_RAW}/ubigeo_peru_2016_distritos.json")
 
         provs_by_dept = {}
         for p in provincias:
@@ -111,7 +93,9 @@ class Command(BaseCommand):
         self.stdout.write("⬇  Descargando estados / departamentos...")
         states = self._fetch(f"{GITHUB_RAW}/states.json")
 
-        self.stdout.write("⬇  Descargando ciudades (archivo ~18 MB gz, puede tardar)...")
+        self.stdout.write(
+            "⬇  Descargando ciudades (archivo ~18 MB gz, puede tardar)..."
+        )
         cities = self._fetch_gz(f"{GITHUB_RELEASES}/json-cities.json.gz")
 
         if filtro:

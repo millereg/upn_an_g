@@ -8,6 +8,11 @@ class VentaForm(forms.ModelForm):
         widget=forms.Select(attrs={"class": "form-control"}),
         empty_label="— Seleccione una sucursal —",
     )
+    almacen = forms.ModelChoiceField(
+        queryset=None,
+        widget=forms.Select(attrs={"class": "form-control"}),
+        empty_label="— Seleccione un almacén —",
+    )
     tipo_documento = forms.ChoiceField(
         choices=Venta.TIPO_DOC, widget=forms.Select(attrs={"class": "form-control"})
     )
@@ -25,21 +30,17 @@ class VentaForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        from apps.sucursales.models import Sucursal
+        from apps.sucursales.models import Sucursal, Almacen
 
         self.fields["sucursal"].queryset = Sucursal.objects.all()
+        self.fields["almacen"].queryset = Almacen.objects.all()
 
     class Meta:
         model = Venta
-        fields = ["sucursal", "tipo_documento", "numero_documento", "estado"]
+        fields = ["sucursal", "almacen", "tipo_documento", "numero_documento", "estado"]
 
 
 class DetalleVentaForm(forms.ModelForm):
-    venta = forms.ModelChoiceField(
-        queryset=Venta.objects.all(),
-        widget=forms.Select(attrs={"class": "form-control"}),
-        empty_label="— Seleccione una venta —",
-    )
     lote = forms.ModelChoiceField(
         queryset=None,
         widget=forms.Select(attrs={"class": "form-control"}),
@@ -64,4 +65,4 @@ class DetalleVentaForm(forms.ModelForm):
 
     class Meta:
         model = DetalleVenta
-        fields = ["venta", "lote", "cantidad", "precio"]
+        fields = ["lote", "cantidad", "precio"]

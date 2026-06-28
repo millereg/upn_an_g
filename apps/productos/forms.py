@@ -49,7 +49,13 @@ class ProductoForm(forms.ModelForm):
         ),
     )
     requiere_receta = forms.BooleanField(
-        required=False, widget=forms.CheckboxInput(attrs={"class": "form-check-input"})
+        required=False,
+        widget=forms.CheckboxInput(
+            attrs={
+                "class": "form-check-input",
+                "style": "margin-top:0.45rem !important;margin-left:0.5rem !important;",
+            }
+        ),
     )
     precio = forms.DecimalField(
         widget=forms.NumberInput(
@@ -79,6 +85,11 @@ class LoteForm(forms.ModelForm):
         widget=forms.Select(attrs={"class": "form-control"}),
         empty_label="— Seleccione un producto —",
     )
+    proveedor = forms.ModelChoiceField(
+        queryset=None,
+        widget=forms.Select(attrs={"class": "form-control"}),
+        empty_label="— Seleccione un proveedor —",
+    )
     numero_lote = forms.CharField(
         widget=forms.TextInput(
             attrs={
@@ -102,10 +113,17 @@ class LoteForm(forms.ModelForm):
         choices=Lote.ESTADO, widget=forms.Select(attrs={"class": "form-control"})
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from apps.compras.models import Proveedor
+
+        self.fields["proveedor"].queryset = Proveedor.objects.all()
+
     class Meta:
         model = Lote
         fields = [
             "producto",
+            "proveedor",
             "numero_lote",
             "fecha_vencimiento",
             "registro_sanitario",
