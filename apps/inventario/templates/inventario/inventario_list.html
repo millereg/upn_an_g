@@ -24,6 +24,9 @@
                         <th>Producto</th>
                         <th>Lote</th>
                         <th>Cantidad</th>
+                        <th>Stock Almacén</th>
+                        <th>Capacidad</th>
+                        <th>Uso</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -33,6 +36,9 @@
                         <th>Producto</th>
                         <th>Lote</th>
                         <th>Cantidad</th>
+                        <th>Stock Almacén</th>
+                        <th>Capacidad</th>
+                        <th>Uso</th>
                         <th>Acciones</th>
                     </tr>
                 </tfoot>
@@ -43,6 +49,17 @@
                         <td>{{ item.lote.producto.nombre }}</td>
                         <td>{{ item.lote.numero_lote }}</td>
                         <td>{{ item.cantidad }}</td>
+                        <td>{{ item.stock_almacen_actual }}</td>
+                        <td>{{ item.capacidad_almacen }}</td>
+                        <td>
+                            {% if item.uso_porcentaje >= 100 %}
+                                <span class="badge badge-danger">{{ item.uso_porcentaje }}%</span>
+                            {% elif item.uso_porcentaje >= 80 %}
+                                <span class="badge badge-warning">{{ item.uso_porcentaje }}%</span>
+                            {% else %}
+                                <span class="badge badge-success">{{ item.uso_porcentaje }}%</span>
+                            {% endif %}
+                        </td>
                         <td>
                             {% has_perm user 'stock' 'eliminar' as can_delete %}
                             {% if can_delete %}

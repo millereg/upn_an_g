@@ -8,11 +8,14 @@ from .forms import CategoriaForm, LoteForm, ProductoForm
 @login_required
 def categoria_list(request):
     categorias = Categoria.objects.all().order_by("nombre")
+    q = request.GET.get('q', '').strip()
+    if q:
+        categorias = categorias.filter(nombre__icontains=q)
     form = CategoriaForm()
     return render(
         request,
         "productos/categoria_list.html",
-        {"categorias": categorias, "form": form},
+        {"categorias": categorias, "form": form, "q": q},
     )
 
 
@@ -52,9 +55,12 @@ def categoria_delete(request, id):
 @login_required
 def producto_list(request):
     productos = Producto.objects.select_related("categoria").all().order_by("nombre")
+    q = request.GET.get('q', '').strip()
+    if q:
+        productos = productos.filter(nombre__icontains=q)
     form = ProductoForm()
     return render(
-        request, "productos/producto_list.html", {"productos": productos, "form": form}
+        request, "productos/producto_list.html", {"productos": productos, "form": form, "q": q}
     )
 
 
@@ -98,8 +104,11 @@ def lote_list(request):
         .all()
         .order_by("numero_lote")
     )
+    q = request.GET.get('q', '').strip()
+    if q:
+        lotes = lotes.filter(numero_lote__icontains=q)
     form = LoteForm()
-    return render(request, "productos/lote_list.html", {"lotes": lotes, "form": form})
+    return render(request, "productos/lote_list.html", {"lotes": lotes, "form": form, "q": q})
 
 
 @login_required

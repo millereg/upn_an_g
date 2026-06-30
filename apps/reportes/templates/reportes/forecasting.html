@@ -1,0 +1,41 @@
+{% extends "reportes/base_report.html" %}
+
+{% block report_content %}
+<div class="table-responsive">
+    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th>Histórico (6 meses)</th>
+                <th>Pronóstico Mes</th>
+                <th>Pronóstico 3 Meses</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in predicciones %}
+            <tr>
+                <td>{{ item.producto }}</td>
+                <td>{{ item.categoria }}</td>
+                <td>{{ item.historico|join:", " }}</td>
+                <td>{{ item.forecast_mes }}</td>
+                <td>{{ item.forecast_3_meses }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">Sin datos para predecir</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="mt-4">
+    <h5>Algoritmo: Suavizado Exponencial</h5>
+    <ul>
+        <li><strong>Fórmula:</strong> pronóstico = α × real + (1-α) × pronóstico_anterior</li>
+        <li><strong>α = 0.3</strong> (peso del dato reciente)</li>
+        <li><strong>Programación Dinámica:</strong> Cada predicción depende de la anterior guardada</li>
+    </ul>
+</div>
+{% endblock %}

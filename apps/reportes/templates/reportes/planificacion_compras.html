@@ -1,0 +1,62 @@
+{% extends "reportes/base_report.html" %}
+
+{% block report_content %}
+<h5>Productos con Stock Bajo</h5>
+<div class="table-responsive mb-4">
+    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Lote</th>
+                <th>Stock Actual</th>
+                <th>Punto Reorden</th>
+                <th>Cantidad Necesaria</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in productos_bajos %}
+            <tr>
+                <td>{{ item.producto }}</td>
+                <td>{{ item.lote }}</td>
+                <td>{{ item.stock_actual }}</td>
+                <td>{{ item.punto_reorden }}</td>
+                <td>{{ item.cantidad_necesaria }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">No hay productos bajo stock</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h5>Órdenes de Compra Sugeridas</h5>
+<div class="table-responsive">
+    <table class="table table-bordered" id="dataTable2" width="100%" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Proveedor Sugerido</th>
+                <th>Costo Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in sugerencias %}
+            <tr>
+                <td>{{ item.producto }}</td>
+                <td>{{ item.cantidad_necesaria }}</td>
+                <td>{{ item.proveedor }}</td>
+                <td>${{ item.costo_total }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center">Sin sugerencias</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

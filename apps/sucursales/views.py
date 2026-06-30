@@ -1,14 +1,19 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db.models import Sum
 from .models import Sucursal, Almacen
 from .forms import AlmacenForm, SucursalForm
+from apps.inventario.models import Inventario
 
 
 @login_required
 def sucursal_list(request):
     sucursales = Sucursal.objects.select_related('ciudad', 'provincia', 'departamento', 'pais').all().order_by('nombre')
-    return render(request, 'sucursales/sucursal_list.html', {'sucursales': sucursales})
+    q = request.GET.get('q', '').strip()
+    if q:
+        sucursales = sucursales.filter(nombre__icontains=q)
+    return render(request, 'sucursales/sucursal_list.html', {'sucursales': sucursales, 'q': q})
 
 
 @login_required
@@ -49,9 +54,18 @@ def sucursal_delete(request, id):
 @login_required
 def almacen_list(request):
     almacenes = Almacen.objects.select_related('sucursal').all().order_by('nombre')
+    q = request.GET.get('q', '').strip()
+    if q:
+        almacenes = almacenes.filter(nombre__icontains=q)
     sucursales = Sucursal.objects.filter(estado='activo').order_by('nombre')
+
+    for almacen in almacenes:
+        stock_total = Inventario.objects.filter(almacen=almacen).aggregate(total=Sum('cantidad'))['total'] or 0
+        almacen.stock_actual = stock_total
+        almacen.uso_porcentaje = int((stock_total / almacen.capacidad) * 100) if almacen.capacidad > 0 else 0
+
     form = AlmacenForm()
-    return render(request, 'sucursales/almacen_list.html', {'almacenes': almacenes, 'sucursales': sucursales, 'form': form})
+    return render(request, 'sucursales/almacen_list.html', {'almacenes': almacenes, 'sucursales': sucursales, 'form': form, 'q': q})
 
 
 @login_required

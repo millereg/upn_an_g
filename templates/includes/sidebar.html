@@ -22,6 +22,7 @@
           <span>{{ grupo_menu }}</span>
         </a>
       </li>
+      <hr class="sidebar-divider my-0">
     {% else %}
       <li class="nav-item">
         <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#{{ grupo_menu|slugify }}_collapse" aria-expanded="true">
@@ -49,3 +50,38 @@
   </div>
 
 </ul>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const currentPath = window.location.pathname;
+
+    const directLinks = document.querySelectorAll('li.nav-item > a.nav-link');
+    directLinks.forEach(function(link) {
+        if (link.getAttribute('href') === currentPath) {
+            const navItem = link.closest('li.nav-item');
+            if (navItem) {
+                navItem.classList.add('active');
+            }
+        }
+    });
+
+    const collapseItems = document.querySelectorAll('.collapse-item');
+    collapseItems.forEach(function(item) {
+        if (item.getAttribute('href') === currentPath) {
+            item.classList.add('active');
+            const navItem = item.closest('li.nav-item');
+            if (navItem) {
+                navItem.classList.add('active');
+            }
+            const collapseEl = item.closest('.collapse');
+            if (collapseEl) {
+                collapseEl.classList.add('show');
+                const navLink = collapseEl.previousElementSibling;
+                if (navLink && navLink.classList.contains('collapsed')) {
+                    navLink.classList.remove('collapsed');
+                }
+            }
+        }
+    });
+});
+</script>

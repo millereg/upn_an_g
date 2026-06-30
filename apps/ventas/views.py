@@ -11,7 +11,10 @@ from apps.inventario.models import Movimiento, DetalleMovimiento, Inventario
 @login_required
 def venta_list(request):
     ventas = Venta.objects.select_related('sucursal').all().order_by('-fecha_creacion')
-    return render(request, 'ventas/venta_list.html', {'ventas': ventas})
+    q = request.GET.get('q', '').strip()
+    if q:
+        ventas = ventas.filter(numero_documento__icontains=q)
+    return render(request, 'ventas/venta_list.html', {'ventas': ventas, 'q': q})
 
 
 @login_required

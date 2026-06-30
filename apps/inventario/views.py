@@ -2,8 +2,39 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.forms import inlineformset_factory
+from django.db import models
 from .models import Inventario, Movimiento, DetalleMovimiento
 from .forms import MovimientoForm, DetalleMovimientoForm
+from apps.sucursales.models import Almacen
+
+
+def get_stock_actual(almacen):
+    total = Inventario.objects.filter(almacen=almacen).aggregate(total=models.Sum('cantidad'))['total'] or 0
+    return total
+
+
+def verificar_capacidad(almacen, cantidad_a_agregar):
+    stock_actual = get_stock_actual(almacen)
+    capacidad = almacen.capacidad
+    nuevo_stock = stock_actual + cantidad_a_agregar
+    if nuevo_stock > capacidad:
+        return False, stock_actual, capacidad
+    return True, stock_actual, capacidad
+
+
+def get_almacen_capacidades():
+    almacenes = Almacen.objects.all()
+    result = {}
+    for alm in almacenes:
+        stock = Inventario.objects.filter(almacen=alm).aggregate(total=models.Sum('cantidad'))['total'] or 0
+        disponible = alm.capacidad - stock
+        result[alm.id] = {
+            'nombre': str(alm),
+            'capacidad': alm.capacidad,
+            'stock': stock,
+            'disponible': max(0, disponible)
+        }
+    return result
 
 
 @login_required
@@ -13,8 +44,20 @@ def inventario_list(request):
         .all()
         .order_by("-id")
     )
+    q = request.GET.get('q', '').strip()
+    if q:
+        from apps.productos.models import Producto
+        inventario = inventario.filter(lote__producto__nombre__icontains=q)
+
+    for inv in inventario:
+        capacidad = inv.almacen.capacidad if inv.almacen else 0
+        stock_almacen = Inventario.objects.filter(almacen=inv.almacen).aggregate(total=models.Sum('cantidad'))['total'] or 0
+        inv.capacidad_almacen = capacidad
+        inv.stock_almacen_actual = stock_almacen
+        inv.uso_porcentaje = int((stock_almacen / capacidad) * 100) if capacidad > 0 else 0
+
     return render(
-        request, "inventario/inventario_list.html", {"inventario": inventario}
+        request, "inventario/inventario_list.html", {"inventario": inventario, "q": q}
     )
 
 
@@ -29,8 +72,11 @@ def inventario_delete(request, id):
 @login_required
 def movimiento_list(request):
     movimientos = Movimiento.objects.select_related("almacen").all().order_by("-fecha")
+    q = request.GET.get('q', '').strip()
+    if q:
+        movimientos = movimientos.filter(referencia__icontains=q)
     return render(
-        request, "inventario/movimiento_list.html", {"movimientos": movimientos}
+        request, "inventario/movimiento_list.html", {"movimientos": movimientos, "q": q}
     )
 
 
@@ -77,8 +123,63 @@ def movimiento_create(request):
                                         "detalle_formset": formset,
                                         "movimiento": None,
                                         "formset_errors": None,
+                                        "almacen_capacidades": get_almacen_capacidades(),
                                     },
                                 )
+
+                if tipo == "entrada":
+                    total_cantidad = sum(
+                        detalle_form.cleaned_data.get("cantidad", 0)
+                        for detalle_form in formset
+                        if detalle_form.cleaned_data.get("lote")
+                        and detalle_form.cleaned_data.get("cantidad")
+                        and not detalle_form.cleaned_data.get("DELETE")
+                    )
+                    puede_agregar, stock_actual, capacidad = verificar_capacidad(almacen, total_cantidad)
+                    if not puede_agregar:
+                        messages.error(
+                            request,
+                            f"Almacén '{almacen.nombre}' sin capacidad. Stock: {stock_actual}, Capacidad: {capacidad}, Intentando agregar: {total_cantidad}"
+                        )
+                        return render(
+                            request,
+                            "inventario/movimiento_form.html",
+                            {
+                                "form": form,
+                                "detalle_formset": formset,
+                                "movimiento": None,
+                                "formset_errors": None,
+                                "almacen_capacidades": get_almacen_capacidades(),
+                            },
+                        )
+
+                if tipo == "transferencia":
+                    almacen_destino = form.cleaned_data.get("almacen_destino")
+                    if almacen_destino:
+                        total_cantidad = sum(
+                            detalle_form.cleaned_data.get("cantidad", 0)
+                            for detalle_form in formset
+                            if detalle_form.cleaned_data.get("lote")
+                            and detalle_form.cleaned_data.get("cantidad")
+                            and not detalle_form.cleaned_data.get("DELETE")
+                        )
+                        puede_agregar, stock_actual, capacidad = verificar_capacidad(almacen_destino, total_cantidad)
+                        if not puede_agregar:
+                            messages.error(
+                                request,
+                                f"Almacén destino '{almacen_destino.nombre}' sin capacidad. Stock: {stock_actual}, Capacidad: {capacidad}, Intentando agregar: {total_cantidad}"
+                            )
+                            return render(
+                                request,
+                                "inventario/movimiento_form.html",
+                                {
+                                    "form": form,
+                                    "detalle_formset": formset,
+                                    "movimiento": None,
+                                    "formset_errors": None,
+                                    "almacen_capacidades": get_almacen_capacidades(),
+                                },
+                            )
 
                 movimiento = form.save(commit=False)
                 movimiento.save()
@@ -134,6 +235,7 @@ def movimiento_create(request):
         form = MovimientoForm()
         formset = DetalleFormSet(queryset=DetalleMovimiento.objects.none())
         formset_errors = None
+
     return render(
         request,
         "inventario/movimiento_form.html",
@@ -142,6 +244,7 @@ def movimiento_create(request):
             "detalle_formset": formset,
             "movimiento": None,
             "formset_errors": formset_errors,
+            "almacen_capacidades": get_almacen_capacidades(),
         },
     )
 

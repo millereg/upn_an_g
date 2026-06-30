@@ -1,0 +1,43 @@
+{% extends "reportes/base_report.html" %}
+
+{% block report_content %}
+<div class="table-responsive">
+    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Lote</th>
+                <th>Almacén</th>
+                <th>Stock Actual</th>
+                <th>Punto Reorden</th>
+                <th>Cantidad Óptima (EOQ)</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in reorder_list %}
+            <tr>
+                <td>{{ item.producto }}</td>
+                <td>{{ item.lote }}</td>
+                <td>{{ item.almacen }}</td>
+                <td>{{ item.stock }}</td>
+                <td>{{ item.punto_reorden }}</td>
+                <td>{{ item.eoq }}</td>
+                <td>
+                    {% if item.necesita_reorden %}
+                        <span class="badge badge-danger">REORDENAR</span>
+                    {% else %}
+                        <span class="badge badge-success">OK</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center">No hay productos con stock bajo</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

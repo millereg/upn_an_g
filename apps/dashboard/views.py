@@ -1,5 +1,5 @@
-from django.shortcuts import render
-from django.db.models import Count, Sum, Avg
+from django.shortcuts import render, redirect
+from django.db.models import Count, Sum, Avg, Q
 from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import datetime
@@ -69,3 +69,28 @@ def index(request):
     context['meses_labels'] = meses_labels
 
     return render(request, 'dashboard/index.html', context)
+
+
+def buscar(request):
+    tipo = request.GET.get('tipo', '')
+    q = request.GET.get('q', '').strip()
+
+    if not q:
+        return redirect('dashboard:index')
+
+    urls = {
+        'productos': '/productos/producto/',
+        'lotes': '/productos/lote/',
+        'categorias': '/productos/categoria/',
+        'ventas': '/ventas/venta/',
+        'compras': '/compras/compra/',
+        'proveedores': '/compras/proveedor/',
+        'almacenes': '/sucursales/almacen/',
+        'sucursales': '/sucursales/sucursal/',
+        'usuarios': '/usuarios/usuario/',
+    }
+
+    if tipo in urls:
+        return redirect(f'{urls[tipo]}?q={q}')
+
+    return redirect('dashboard:index')

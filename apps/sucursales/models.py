@@ -49,6 +49,7 @@ class Almacen(models.Model):
     sucursal = models.ForeignKey(Sucursal, on_delete=models.PROTECT)
     nombre = models.CharField(max_length=50)
     tipo = models.CharField(max_length=15, choices=TIPO, default='principal')
+    capacidad = models.IntegerField(default=1000, help_text="Capacidad máxima en unidades")
     estado = models.CharField(max_length=10, choices=ESTADO, default='activo')
     creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='almacenes_creados')
     actualizado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='almacenes_actualizados')

@@ -1,4 +1,5 @@
 {% load static %}
+{% load permisos_tags %}
 
 <nav
   class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow"
@@ -14,17 +15,32 @@
   <!-- Topbar Search -->
   <form
     class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search"
+    method="GET"
+    action="{% url 'dashboard:buscar' %}"
+    id="searchForm"
   >
     <div class="input-group">
+      <select class="form-control" name="tipo" id="searchType" style="min-width: 120px;margin-right: 20px; border-radius: .35rem !important;">
+        <option value="productos" data-for="productos">Productos</option>
+        <option value="lotes" data-for="lotes">Lotes</option>
+        <option value="categorias" data-for="categorias">Categorías</option>
+        <option value="ventas" data-for="ventas">Ventas</option>
+        <option value="compras" data-for="compras">Compras</option>
+        <option value="proveedores" data-for="proveedores">Proveedores</option>
+        <option value="almacenes" data-for="almacenes">Almacenes</option>
+        <option value="sucursales" data-for="sucursales">Sucursales</option>
+        <option value="usuarios" data-for="usuarios">Usuarios</option>
+      </select>
       <input
         type="text"
+        name="q"
         class="form-control bg-light border-0 small"
-        placeholder="Buscar por..."
+        placeholder="Buscar..."
         aria-label="Buscar"
         aria-describedby="basic-addon2"
       />
       <div class="input-group-append">
-        <button class="btn btn-primary" type="button">
+        <button class="btn btn-primary" type="submit">
           <i class="fas fa-search fa-sm"></i>
         </button>
       </div>
@@ -33,45 +49,6 @@
 
   <!-- Topbar Navbar -->
   <ul class="navbar-nav ml-auto">
-    <!-- Nav Item - Search Dropdown (Visible Only XS) -->
-    <li class="nav-item dropdown no-arrow d-sm-none">
-      <a
-        class="nav-link dropdown-toggle"
-        href="#"
-        id="searchDropdown"
-        role="button"
-        data-toggle="dropdown"
-        aria-haspopup="true"
-        aria-expanded="false"
-      >
-        <i class="fas fa-search fa-fw"></i>
-      </a>
-      <!-- Dropdown - Messages -->
-      <div
-        class="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in"
-        aria-labelledby="searchDropdown"
-      >
-        <form class="form-inline mr-auto w-100 navbar-search">
-          <div class="input-group">
-            <input
-              type="text"
-              class="form-control bg-light border-0 small"
-              placeholder="Buscar por..."
-              aria-label="Buscar"
-              aria-describedby="basic-addon2"
-            />
-            <div class="input-group-append">
-              <button class="btn btn-primary" type="button">
-                <i class="fas fa-search fa-sm"></i>
-              </button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </li>
-
-    <div class="topbar-divider d-none d-sm-block"></div>
-
     <!-- Nav Item - User Information -->
     <li class="nav-item dropdown no-arrow">
       <a
@@ -105,3 +82,45 @@
     </li>
   </ul>
 </nav>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var optionForMap = {
+        'productos': 'productos',
+        'lotes': 'lotes',
+        'categorias': 'categorias',
+        'ventas': 'ventas',
+        'compras': 'compras',
+        'proveedores': 'proveedores',
+        'almacenes': 'almacenes',
+        'sucursales': 'sucursales',
+        'usuarios': 'usuarios'
+    };
+
+    var select = document.getElementById('searchType');
+    var options = select.querySelectorAll('option');
+
+    options.forEach(function(opt) {
+        var forModule = opt.getAttribute('data-for');
+        var sidebarLink = document.querySelector('.collapse-item[href*="' + forModule + '"]');
+        if (!sidebarLink) {
+            var parentLink = document.querySelector('a.nav-link[href*="' + forModule + '"]');
+            if (!parentLink) {
+                opt.style.display = 'none';
+            }
+        }
+    });
+
+    if (select.options.length > 0) {
+        var visibleOptions = Array.from(options).filter(function(o) { return o.style.display !== 'none'; });
+        if (visibleOptions.length === 0) {
+            select.closest('form').style.display = 'none';
+        } else {
+            var firstVisible = visibleOptions[0];
+            if (firstVisible) {
+                select.value = firstVisible.value;
+            }
+        }
+    }
+});
+</script>

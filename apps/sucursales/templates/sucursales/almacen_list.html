@@ -29,6 +29,9 @@
                         <th>Nombre</th>
                         <th>Sucursal</th>
                         <th>Tipo</th>
+                        <th>Capacidad</th>
+                        <th>Stock Actual</th>
+                        <th>Uso</th>
                         <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
@@ -38,6 +41,9 @@
                         <th>Nombre</th>
                         <th>Sucursal</th>
                         <th>Tipo</th>
+                        <th>Capacidad</th>
+                        <th>Stock Actual</th>
+                        <th>Uso</th>
                         <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
@@ -48,6 +54,17 @@
                         <td>{{ almacen.nombre }}</td>
                         <td>{{ almacen.sucursal.nombre }}</td>
                         <td>{{ almacen.get_tipo_display }}</td>
+                        <td>{{ almacen.capacidad }}</td>
+                        <td>{{ almacen.stock_actual }}</td>
+                        <td>
+                            {% if almacen.uso_porcentaje >= 100 %}
+                                <span class="badge badge-danger">{{ almacen.uso_porcentaje }}%</span>
+                            {% elif almacen.uso_porcentaje >= 80 %}
+                                <span class="badge badge-warning">{{ almacen.uso_porcentaje }}%</span>
+                            {% else %}
+                                <span class="badge badge-success">{{ almacen.uso_porcentaje }}%</span>
+                            {% endif %}
+                        </td>
                         <td>
                             {% if almacen.estado == 'activo' %}
                                 <span class="badge badge-success">Activo</span>
@@ -59,7 +76,7 @@
                             {% has_perm user 'almacenes' 'editar' as can_edit %}
                             {% has_perm user 'almacenes' 'eliminar' as can_delete %}
                             {% if can_edit %}
-                            <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#almacenModal" data-id="{{ almacen.id }}" data-nombre="{{ almacen.nombre }}" data-sucursal="{{ almacen.sucursal.id }}" data-tipo="{{ almacen.tipo }}" data-estado="{{ almacen.estado }}">
+                            <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#almacenModal" data-id="{{ almacen.id }}" data-nombre="{{ almacen.nombre }}" data-sucursal="{{ almacen.sucursal.id }}" data-tipo="{{ almacen.tipo }}" data-capacidad="{{ almacen.capacidad }}" data-estado="{{ almacen.estado }}">
                                 <i class="fas fa-edit"></i>
                             </button>
                             {% endif %}
@@ -148,6 +165,7 @@
             modal.find('select[name="sucursal"]').val(button.data('sucursal'));
             modal.find('input[name="nombre"]').val(button.data('nombre'));
             modal.find('select[name="tipo"]').val(button.data('tipo'));
+            modal.find('input[name="capacidad"]').val(button.data('capacidad'));
             modal.find('select[name="estado"]').val(button.data('estado'));
             modal.find('form').attr('action', '/sucursales/editar-almacen/' + id + '/');
         } else {
@@ -155,6 +173,7 @@
             modal.find('select[name="sucursal"]').val('');
             modal.find('input[name="nombre"]').val('');
             modal.find('select[name="tipo"]').val('principal');
+            modal.find('input[name="capacidad"]').val('1000');
             modal.find('select[name="estado"]').val('activo');
             modal.find('form').attr('action', '/sucursales/crear-almacen/');
         }

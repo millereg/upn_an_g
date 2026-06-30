@@ -9,6 +9,17 @@
     </a>
 </div>
 
+{% if messages %}
+{% for message in messages %}
+<div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+{% endfor %}
+{% endif %}
+
 <div class="card shadow mb-4">
     <div class="card-header py-3">
         <h6 class="m-0 font-weight-bold text-primary">{% if compra %}Editar{% else %}Nueva{% endif %} Compra</h6>
@@ -34,6 +45,12 @@
                     <div class="form-group">
                         <label for="id_almacen">Almacén</label>
                         {{ form.almacen }}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Capacidad</label>
+                        <div id="almacen_capacidad" class="form-control" style="background:#e9ecef;">Seleccione almacén</div>
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -93,4 +110,29 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block js %}
+<script>
+    const almacenCapacidades = {{ almacen_capacidades|safe }};
+
+    function actualizarCapacidad() {
+        const select = document.getElementById('id_almacen');
+        const display = document.getElementById('almacen_capacidad');
+        const selectedId = parseInt(select.value);
+
+        if (selectedId && almacenCapacidades[selectedId]) {
+            const data = almacenCapacidades[selectedId];
+            display.innerHTML = `<strong>Stock:</strong> ${data.stock} | <strong>Cap:</strong> ${data.capacidad} | <strong>Disp:</strong> ${data.disponible}`;
+            display.style.background = data.disponible < 100 ? '#fff3cd' : '#d4edda';
+        } else {
+            display.innerHTML = 'Seleccione almacén';
+            display.style.background = '#e9ecef';
+        }
+    }
+
+    const almacenSelect = document.getElementById('id_almacen');
+    almacenSelect.addEventListener('change', actualizarCapacidad);
+    actualizarCapacidad();
+</script>
 {% endblock %}

@@ -8,7 +8,10 @@ from .forms import UsuarioForm, UsuarioEditForm, PerfilForm
 @login_required
 def usuario_list(request):
     usuarios = User.objects.all().order_by("username")
-    return render(request, "usuarios/usuario_list.html", {"usuarios": usuarios})
+    q = request.GET.get('q', '').strip()
+    if q:
+        usuarios = usuarios.filter(username__icontains=q)
+    return render(request, "usuarios/usuario_list.html", {"usuarios": usuarios, "q": q})
 
 
 @login_required

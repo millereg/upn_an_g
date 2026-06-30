@@ -10410,6 +10410,11 @@ a:focus {
   font-weight: 700;
 }
 
+.sidebar li.nav-item.active > .nav-link {
+  color: #4e73df;
+  font-weight: 700;
+}
+
 .sidebar #sidebarToggle {
   width: 2.5rem;
   height: 2.5rem;

@@ -3,9 +3,40 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.forms import inlineformset_factory
 from django.utils import timezone
+from django.db import models
 from .models import Proveedor, Compra, DetalleCompra
 from .forms import ProveedorForm, CompraForm, DetalleCompraForm
 from apps.inventario.models import Movimiento, DetalleMovimiento, Inventario
+from apps.sucursales.models import Almacen
+
+
+def get_stock_actual(almacen):
+    total = Inventario.objects.filter(almacen=almacen).aggregate(total=models.Sum('cantidad'))['total'] or 0
+    return total
+
+
+def verificar_capacidad(almacen, cantidad_a_agregar):
+    stock_actual = get_stock_actual(almacen)
+    capacidad = almacen.capacidad
+    nuevo_stock = stock_actual + cantidad_a_agregar
+    if nuevo_stock > capacidad:
+        return False, stock_actual, capacidad
+    return True, stock_actual, capacidad
+
+
+def get_almacen_capacidades():
+    almacenes = Almacen.objects.all()
+    result = {}
+    for alm in almacenes:
+        stock = Inventario.objects.filter(almacen=alm).aggregate(total=models.Sum('cantidad'))['total'] or 0
+        disponible = alm.capacidad - stock
+        result[alm.id] = {
+            'nombre': str(alm),
+            'capacidad': alm.capacidad,
+            'stock': stock,
+            'disponible': max(0, disponible)
+        }
+    return result
 
 
 @login_required
@@ -15,7 +46,10 @@ def proveedor_list(request):
         .all()
         .order_by("nombre")
     )
-    return render(request, "compras/proveedor_list.html", {"proveedores": proveedores})
+    q = request.GET.get('q', '').strip()
+    if q:
+        proveedores = proveedores.filter(nombre__icontains=q)
+    return render(request, "compras/proveedor_list.html", {"proveedores": proveedores, "q": q})
 
 
 @login_required
@@ -64,7 +98,10 @@ def compra_list(request):
         .all()
         .order_by("-fecha_creacion")
     )
-    return render(request, "compras/compra_list.html", {"compras": compras})
+    q = request.GET.get('q', '').strip()
+    if q:
+        compras = compras.filter(numero_documento__icontains=q)
+    return render(request, "compras/compra_list.html", {"compras": compras, "q": q})
 
 
 @login_required
@@ -78,6 +115,27 @@ def compra_create(request):
         if form.is_valid():
             if formset.is_valid():
                 compra = form.save()
+                almacen = compra.almacen
+
+                total_cantidad = 0
+                for detalle_form in formset:
+                    if (
+                        detalle_form.cleaned_data.get("cantidad")
+                        and not detalle_form.cleaned_data.get("DELETE")
+                    ):
+                        total_cantidad += detalle_form.cleaned_data.get("cantidad", 0)
+
+                puede_agregar, stock_actual, capacidad = verificar_capacidad(almacen, total_cantidad)
+                if not puede_agregar:
+                    messages.error(
+                        request,
+                        f"Almacén '{almacen.nombre}' sin capacidad suficiente. Stock actual: {stock_actual}, Capacidad: {capacidad}, Intentando agregar: {total_cantidad}"
+                    )
+                    return render(
+                        request,
+                        "compras/compra_form.html",
+                        {"form": form, "detalle_formset": formset, "compra": None, "almacen_capacidades": get_almacen_capacidades()},
+                    )
 
                 movimiento = Movimiento.objects.create(
                     tipo="entrada",
@@ -118,7 +176,7 @@ def compra_create(request):
     return render(
         request,
         "compras/compra_form.html",
-        {"form": form, "detalle_formset": formset, "compra": None},
+        {"form": form, "detalle_formset": formset, "compra": None, "almacen_capacidades": get_almacen_capacidades()},
     )
 
 

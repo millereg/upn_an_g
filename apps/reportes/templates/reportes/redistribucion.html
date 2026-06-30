@@ -1,0 +1,70 @@
+{% extends "reportes/base_report.html" %}
+
+{% block report_content %}
+<h5>Stock por Almacén</h5>
+<div class="table-responsive mb-4">
+    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Almacén</th>
+                <th>Stock Total</th>
+                <th>Capacidad</th>
+                <th>Uso %</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for alm, data in stock_por_almacen.items %}
+            <tr>
+                <td>{{ alm }}</td>
+                <td>{{ data.total }}</td>
+                <td>{{ data.capacidad }}</td>
+                <td>{{ data.uso_porcentaje }}%</td>
+                <td>
+                    {% if data.uso_porcentaje >= 100 %}
+                        <span class="badge badge-danger">SOBRECAPACIDAD</span>
+                    {% elif data.uso_porcentaje >= 80 %}
+                        <span class="badge badge-warning">CERCA DE LLENO</span>
+                    {% else %}
+                        <span class="badge badge-success">OK</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">Sin datos</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h5>Redistribuciones Sugeridas</h5>
+<div class="table-responsive">
+    <table class="table table-bordered" id="dataTable2" width="100%" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Desde</th>
+                <th>Hacia</th>
+                <th>Cantidad</th>
+                <th>Motivo</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in redistribuciones %}
+            <tr>
+                <td>{{ item.desde }}</td>
+                <td>{{ item.hacia }}</td>
+                <td>{{ item.cantidad }}</td>
+                <td>{{ item.motivo }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center">No hay redistribuciones necesarias</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

@@ -28,6 +28,13 @@ MODULOS = [
     (16, "Compras", "compras", "fas fa-fw fa-cart-plus", "compras:compra_list", "Operaciones", 31, None),
     (17, "Proveedores", "proveedores", "fas fa-fw fa-truck", "compras:proveedor_list", "Operaciones", 32, None),
     (18, "Ventas", "ventas", "fas fa-fw fa-file-invoice-dollar", "ventas:venta_list", "Operaciones", 33, None),
+    # Reportes
+    (24, "Reportes", "reportes", "fas fa-fw fa-chart-bar", "", "Reportes", 35, None),
+    (25, "Punto de Reorden", "punto_reorden", "fas fa-fw fa-exclamation-circle", "reportes:reorder_point", "Reportes", 36, 24),
+    (26, "Asignación Almacenes", "asignacion_almacenes", "fas fa-fw fa-warehouse", "reportes:asignacion_almacenes", "Reportes", 37, 24),
+    (27, "Planificación Compras", "planificacion_compras", "fas fa-fw fa-shopping-cart", "reportes:planificacion_compras", "Reportes", 38, 24),
+    (28, "Pronóstico Demanda", "pronostico", "fas fa-fw fa-chart-line", "reportes:forecasting", "Reportes", 39, 24),
+    (29, "Redistribución", "redistribucion", "fas fa-fw fa-exchange-alt", "reportes:redistribucion", "Reportes", 40, 24),
     # Configuración
     (19, "Ubicación", "ubicacion", "fas fa-fw fa-globe", "", "Configuración", 40, None),
     (20, "Países", "paises", "fas fa-fw fa-flag", "ubicacion:pais_list", "Configuración", 41, None),
@@ -54,11 +61,14 @@ GRUPOS_MODULOS = {
     1: ("dashboard", "usuarios", "inventario", "productos", "categorias", "lotes", "stock",
          "movimientos", "almacenes", "sucursales",
          "operaciones", "compras", "proveedores", "ventas",
-         "ubicacion", "paises", "departamentos", "provincias", "ciudades"),
-    2: ("dashboard", "operaciones", "compras", "proveedores", "ventas", "productos", "categorias"),
+         "ubicacion", "paises", "departamentos", "provincias", "ciudades",
+         "reportes", "reorder_point", "asignacion_almacenes", "planificacion_compras", "forecasting", "redistribucion"),
+    2: ("dashboard", "operaciones", "compras", "proveedores", "ventas", "productos", "categorias",
+         "reportes", "planificacion_compras", "forecasting"),
     3: ("dashboard", "inventario", "productos", "categorias", "lotes", "stock",
          "movimientos", "almacenes", "sucursales",
-         "operaciones", "compras", "proveedores"),
+         "operaciones", "compras", "proveedores",
+         "reportes", "reorder_point", "asignacion_almacenes", "redistribucion"),
     4: None,
 }
 

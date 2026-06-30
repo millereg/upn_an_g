@@ -1,0 +1,45 @@
+{% extends "reportes/base_report.html" %}
+
+{% block report_content %}
+<div class="table-responsive">
+    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th>Stock Total</th>
+                <th>Almacén Asignado</th>
+                <th>Capacidad</th>
+                <th>Disponible</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in asignaciones %}
+            <tr>
+                <td>{{ item.producto }}</td>
+                <td>{{ item.categoria }}</td>
+                <td>{{ item.stock_total }}</td>
+                <td>{{ item.almacen_asignado }}</td>
+                <td>{{ item.capacidad }}</td>
+                <td>{{ item.disponible }}</td>
+                <td>
+                    {% if item.disponible <= 0 %}
+                        <span class="badge badge-danger">LLENO</span>
+                    {% elif item.disponible < 100 %}
+                        <span class="badge badge-warning">CASI LLENO</span>
+                    {% else %}
+                        <span class="badge badge-success">Con espacio</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center">No hay asignaciones</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

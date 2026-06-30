@@ -114,10 +114,15 @@ class AlmacenForm(forms.ModelForm):
     tipo = forms.ChoiceField(
         choices=Almacen.TIPO, widget=forms.Select(attrs={"class": "form-control"})
     )
+    capacidad = forms.IntegerField(
+        widget=forms.NumberInput(attrs={"class": "form-control", "min": "1"}),
+        initial=1000,
+        help_text="Capacidad máxima en unidades"
+    )
     estado = forms.ChoiceField(
         choices=Almacen.ESTADO, widget=forms.Select(attrs={"class": "form-control"})
     )
 
     class Meta:
         model = Almacen
-        fields = ["sucursal", "nombre", "tipo", "estado"]
+        fields = ["sucursal", "nombre", "tipo", "capacidad", "estado"]

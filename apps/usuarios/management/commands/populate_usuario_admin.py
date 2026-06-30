@@ -4,8 +4,6 @@ from django.db import transaction
 
 
 class Command(BaseCommand):
-    help = "Crea el usuario admin con password Password123 y grupo Desarrollador"
-
     def handle(self, *args, **options):
         with transaction.atomic():
             user, created = User.objects.get_or_create(

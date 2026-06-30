@@ -19,6 +19,7 @@ upn_an_g/
 │   ├── dashboard/     # Panel principal
 │   ├── inventario/    # Inventario, movimientos, detalles
 │   ├── productos/     # Categorías, productos, lotes
+│   ├── reportes/      # Reportes de algoritmos
 │   ├── sucursales/    # Sucursales, almacenes
 │   ├── ubicacion/     # Países, departamentos, provincias, ciudades
 │   ├── usuarios/      # Perfiles de usuario
@@ -315,13 +316,13 @@ Reporte: Redistribución de stock
 
 ---
 
-## Reportes a Implementar
+## Reportes a Implementar (Algoritmos)
 
-1. **Reporte de Reorder Point** - `inventario/reporte-reorder/`
-2. **Reporte de Asignación de Almacenes** - `inventario/reporte-asignacion/`
-3. **Reporte de Planificación de Compras** - `compras/reporte-planificacion/`
-4. **Reporte de Forecasting** - `productos/reporte-forecasting/`
-5. **Reporte de Redistribución** - `inventario/reporte-redistribucion/`
+1. **Reporte de Reorder Point** - `inventario/reporte-reorder/` (Voraz + DP)
+2. **Reporte de Asignación de Almacenes** - `inventario/reporte-asignacion/` (Voraz + Backtracking)
+3. **Reporte de Planificación de Compras** - `compras/reporte-planificacion/` (Programación Dinámica)
+4. **Reporte de Forecasting** - `productos/reporte-forecasting/` (Suavizado Exponencial)
+5. **Reporte de Redistribución** - `inventario/reporte-redistribucion/` (Backtracking)
 
 ---
 
@@ -329,44 +330,56 @@ Reporte: Redistribución de stock
 
 | Módulo        | Models | Admin | Forms | Views | URLs |
 |---------------|--------|-------|-------|-------|------|
-| acceso        | ✅     | ✅    | ✅    | ⚠️    | ⚠️   |
-| compras       | ✅     | ✅    | ✅    | ❌    | ❌    |
-| dashboard     | ❌     | ❌    | ❌    | ⚠️    | ✅    |
-| inventario    | ✅     | ✅    | ❌    | ❌    | ❌    |
-| productos     | ✅     | ✅    | ✅    | ❌    | ❌    |
-| sucursales    | ✅     | ❌    | ❌    | ❌    | ❌    |
-| ubicacion     | ✅     | ❌    | ❌    | ❌    | ❌    |
-| usuarios      | ✅     | ✅    | ✅    | ⚠️    | ⚠️    |
-| ventas        | ✅     | ✅    | ❌    | ❌    | ❌    |
+| acceso        | ✅     | ✅    | ✅    | ✅    | ✅   |
+| compras       | ✅     | ✅    | ✅    | ✅    | ✅   |
+| dashboard     | N/A    | N/A   | N/A   | ✅    | ✅   |
+| inventario    | ✅     | ✅    | ✅    | ✅    | ✅   |
+| productos     | ✅     | ✅    | ✅    | ✅    | ✅   |
+| reportes      | N/A    | N/A   | N/A   | ✅    | ✅   |
+| sucursales    | ✅     | ✅    | ✅    | ✅    | ✅   |
+| ubicacion     | ✅     | ✅    | ✅    | ✅    | ✅   |
+| usuarios      | ✅     | ✅    | ✅    | ✅    | ✅   |
+| ventas        | ✅     | ✅    | ✅    | ✅    | ✅   |
 
 **Leyenda:** ✅ Completo | ⚠️ Parcial | ❌ No implementado
+
+**Nota:** CRUD completo con modales para Categoria, Almacen, Grupo, Lote, Producto y páginas单独的 para Sucursal, Proveedor, Movimiento, Compra, Venta, Usuario.
 
 ## Rutas Configuradas
 
 - `/` - Login
 - `/logout/` - Logout
-- `/dashboard/` - Panel principal
+- `/dashboard/` - Panel principal (rol-based)
 - `/admin/` - Django Admin
-- `/acceso/` - App de acceso
-- `/usuarios/` - Gestión de usuarios (CRUD completo)
-
-## Modelos Pendientes de Registrar en Admin
-
-- `ubicacion`: Pais, Departamento, Provincia, Ciudad
-- `sucursales`: Sucursal, Almacen
+- `/acceso/` - Login, logout, módulos, grupos, permisos
+- `/usuarios/` - CRUD usuarios con perfiles
+- `/productos/` - CRUD productos, categorías, lotes (modal)
+- `/compras/` - CRUD proveedores, compras con detalles
+- `/ventas/` - CRUD ventas con detalles
+- `/inventario/` - Stock, movimientos
+- `/sucursales/` - CRUD sucursales, almacenes (modal)
+- `/ubicacion/` - CRUD países, departamentos, provincias, ciudades
+- `/reportes/` - Reportes de algoritmos
+  - `/reportes/reorder-point/` - Punto de reorden (Voraz + DP)
+  - `/reportes/asignacion-almacenes/` - Asignación (Voraz + Backtracking)
+  - `/reportes/planificacion-compras/` - Planificación compras (Programación Dinámica)
+  - `/reportes/forecasting/` - Predicción demanda (Suavizado Exponencial)
+  - `/reportes/redistribucion/` - Redistribución stock (Backtracking)
 
 ## Formularios Implementados
 
-- `acceso`: LoginForm, ModuloForm, TipoPermisoForm, PermisoModuloForm
+- `acceso`: LoginForm, ModuloForm, TipoPermisoForm, PermisoModuloForm, GrupoForm
 - `compras`: ProveedorForm, CompraForm, DetalleCompraForm
+- `inventario`: InventarioForm, MovimientoForm, DetalleMovimientoForm
 - `productos`: CategoriaForm, ProductoForm, LoteForm
+- `sucursales`: SucursalForm, AlmacenForm
+- `ubicacion`: PaisForm, DepartamentoForm, ProvinciaForm, CiudadForm
 - `usuarios`: UsuarioForm, UsuarioEditForm, PerfilForm
+- `ventas`: VentaForm, DetalleVentaForm
 
 ## Próximos Pasos Sugeridos
 
-1. Completar vistas CRUD para compras, ventas, productos, inventario
-2. Registrar modelos de ubicacion y sucursales en admin
-3. Implementar Select2/Dropdown dinámico para ubicación (cascada país→departamento→provincia→ciudad)
-4. **Implementar los 5 algoritmos y sus reportes**
-5. Implementar sistema de inventario (entradas/salidas por compras/ventas)
-6. Agregar validaciones y permisos por grupo
+1. Implementar Select2/Dropdown dinámico para ubicación (cascada país→departamento→provincia→ciudad)
+2. Agregar campos `punto_reorden`, `demanda_historica` a Inventario para algoritmos
+3. Agregar permisos por grupo en vistas
+4. Mejorar dashboard con filtros por fecha
