@@ -1,5 +1,7 @@
+import csv
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
 from apps.inventario.models import Inventario
 from apps.productos.models import Producto
 from apps.compras.models import Proveedor
@@ -25,9 +27,19 @@ def reorder_point_report(request):
             'almacen': str(inv.almacen) if inv.almacen else 'N/A',
             'stock': stock,
             'punto_reorden': punto_reorden,
-            'necesita_reorden': necesita_reorden,
+            'necesita_reorden': 'Sí' if necesita_reorden else 'No',
             'eoq': eoq,
         })
+
+    if request.GET.get('export') == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="reporte_punto_reorden.csv"'
+        writer = csv.writer(response)
+        writer.writerow(['Producto', 'Lote', 'Almacén', 'Stock', 'Punto Reorden', 'Necesita Reorden', 'EOQ'])
+        for item in reorder_list:
+            writer.writerow([item['producto'], item['lote'], item['almacen'], item['stock'],
+                           item['punto_reorden'], item['necesita_reorden'], item['eoq']])
+        return response
 
     context = {
         'reorder_list': reorder_list,
@@ -109,6 +121,17 @@ def asignacion_almacenes_report(request):
         'asignaciones': asignaciones,
         'title': 'Reporte - Asignación de Almacenes'
     }
+
+    if request.GET.get('export') == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="reporte_asignacion_almacenes.csv"'
+        writer = csv.writer(response)
+        writer.writerow(['Producto', 'Categoría', 'Stock Total', 'Almacén Asignado', 'Capacidad', 'Disponible'])
+        for item in asignaciones:
+            writer.writerow([item['producto'], item['categoria'], item['stock_total'],
+                           item['almacen_asignado'], item['capacidad'], item['disponible']])
+        return response
+
     return render(request, 'reportes/asignacion_almacenes.html', context)
 
 
@@ -143,6 +166,21 @@ def planification_purchases_report(request):
         'sugerencias': sugerencias,
         'title': 'Reporte - Planificación de Compras'
     }
+
+    if request.GET.get('export') == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="reporte_planificacion_compras.csv"'
+        writer = csv.writer(response)
+        writer.writerow(['Producto', 'Stock Actual', 'Punto Reorden', 'Cantidad Necesaria'])
+        for item in productos_bajos:
+            writer.writerow([item['producto'], item['stock_actual'], item['punto_reorden'], item['cantidad_necesaria']])
+        writer.writerow([])
+        writer.writerow(['Sugerencias de Compra'])
+        writer.writerow(['Producto', 'Cantidad', 'Proveedor', 'Costo Total'])
+        for item in sugerencias:
+            writer.writerow([item['producto'], item['cantidad_necesaria'], item['proveedor'], item['costo_total']])
+        return response
+
     return render(request, 'reportes/planificacion_compras.html', context)
 
 
@@ -210,6 +248,17 @@ def forecasting_report(request):
         'predicciones': predicciones,
         'title': 'Reporte - Pronóstico de Demanda'
     }
+
+    if request.GET.get('export') == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="reporte_pronostico_demanda.csv"'
+        writer = csv.writer(response)
+        writer.writerow(['Producto', 'Categoría', 'Histórico', 'Forecast Mes', 'Forecast 3 Meses'])
+        for item in predicciones:
+            hist_str = ', '.join(map(str, item['historico']))
+            writer.writerow([item['producto'], item['categoria'], hist_str, item['forecast_mes'], item['forecast_3_meses']])
+        return response
+
     return render(request, 'reportes/forecasting.html', context)
 
 
@@ -262,6 +311,23 @@ def redistribucion_report(request):
         'redistribuciones': redistribuciones,
         'title': 'Reporte - Redistribución de Stock'
     }
+
+    if request.GET.get('export') == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="reporte_redistribucion_stock.csv"'
+        writer = csv.writer(response)
+        writer.writerow(['Stock por Almacén'])
+        writer.writerow(['Almacén', 'Stock', 'Capacidad', 'Uso %', 'Estado'])
+        for nombre, data in stock_por_almacen.items():
+            estado = 'Lleno' if data['uso_porcentaje'] >= 80 else ('Casi lleno' if data['uso_porcentaje'] >= 50 else 'Con espacio')
+            writer.writerow([nombre, data['total'], data['capacidad'], data['uso_porcentaje'], estado])
+        writer.writerow([])
+        writer.writerow(['Sugerencias de Redistribución'])
+        writer.writerow(['Desde', 'Hacia', 'Cantidad', 'Motivo'])
+        for item in redistribuciones:
+            writer.writerow([item['desde'], item['hacia'], item['cantidad'], item['motivo']])
+        return response
+
     return render(request, 'reportes/redistribucion.html', context)
 
 

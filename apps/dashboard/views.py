@@ -1,8 +1,7 @@
 from django.shortcuts import render, redirect
-from django.db.models import Count, Sum, Avg, Q
+from django.db.models import Count, Sum
 from django.contrib.auth.models import User
 from django.utils import timezone
-from datetime import datetime
 from calendar import month_abbr
 from apps.ventas.models import Venta
 from apps.compras.models import Compra
