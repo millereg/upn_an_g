@@ -1,27 +1,30 @@
 from django.core.management.base import BaseCommand
-from django.contrib.auth.models import User, Group
-from django.db import transaction
+from django.contrib.auth.models import User
 
 
 class Command(BaseCommand):
+    help = 'Crea usuario admin'
+
     def handle(self, *args, **options):
-        with transaction.atomic():
-            user, created = User.objects.get_or_create(
-                username='admin',
-                defaults={
-                    'email': 'admin@example.com',
-                    'is_staff': True,
-                    'is_superuser': True,
-                    'is_active': True,
-                }
-            )
-            user.set_password('Password123')
-            user.save()
+        user, created = User.objects.get_or_create(
+            username='admin',
+            defaults={
+                'email': 'admin@oficinas.com',
+                'is_staff': True,
+                'is_superuser': True,
+                'is_active': True,
+                'first_name': 'Admin',
+                'last_name': 'Sistema',
+            }
+        )
+        user.set_password('Password123')
+        user.save()
 
-            grupo_desarrollador, _ = Group.objects.get_or_create(name='Desarrollador')
-            user.groups.add(grupo_desarrollador)
+        from django.contrib.auth.models import Group
+        grupo = Group.objects.get(id=1)
+        user.groups.add(grupo)
 
-            if created:
-                self.stdout.write(self.style.SUCCESS("Usuario 'admin' creado con grupo Desarrollador"))
-            else:
-                self.stdout.write(self.style.SUCCESS("Usuario 'admin' actualizado"))
+        if created:
+            self.stdout.write(self.style.SUCCESS("Usuario 'admin' creado con grupo Administrador"))
+        else:
+            self.stdout.write(self.style.SUCCESS("Usuario 'admin' actualizado"))
