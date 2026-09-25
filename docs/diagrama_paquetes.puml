@@ -1,0 +1,115 @@
+@startuml
+skinparam componentStyle uml2
+
+package "inventario_upn_g" {
+    [settings.py] as settings
+    [urls.py] as urls
+    [manage.py] as manage
+}
+
+package "apps.acceso" as acceso {
+    [models.py] as acceso_models
+    [views.py] as acceso_views
+    [forms.py] as acceso_forms
+    [urls.py] as acceso_urls
+}
+
+package "apps.usuarios" as usuarios {
+    [models.py] as usuarios_models
+    [views.py] as usuarios_views
+    [forms.py] as usuarios_forms
+    [urls.py] as usuarios_urls
+}
+
+package "apps.ubicacion" as ubicacion {
+    [models.py] as ubicacion_models
+    [views.py] as ubicacion_views
+    [urls.py] as ubicacion_urls
+}
+
+package "apps.sucursales" as sucursales {
+    [models.py] as sucursales_models
+    [views.py] as sucursales_views
+    [forms.py] as sucursales_forms
+    [urls.py] as sucursales_urls
+}
+
+package "apps.productos" as productos {
+    [models.py] as productos_models
+    [views.py] as productos_views
+    [forms.py] as productos_forms
+    [urls.py] as productos_urls
+}
+
+package "apps.compras" as compras {
+    [models.py] as compras_models
+    [views.py] as compras_views
+    [urls.py] as compras_urls
+}
+
+package "apps.inventario" as inventario {
+    [models.py] as inventario_models
+    [views.py] as inventario_views
+    [forms.py] as inventario_forms
+    [urls.py] as inventario_urls
+}
+
+package "apps.ventas" as ventas {
+    [models.py] as ventas_models
+    [views.py] as ventas_views
+    [forms.py] as ventas_forms
+    [urls.py] as ventas_urls
+}
+
+package "apps.reportes" as reportes {
+    [views.py] as reportes_views
+    [urls.py] as reportes_urls
+}
+
+package "apps.dashboard" as dashboard {
+    [views.py] as dashboard_views
+    [urls.py] as dashboard_urls
+}
+
+package "apps.core" as core {
+    [utils.py] as core_utils
+}
+
+package "templates" as templates {
+    [base.html] as base_template
+}
+
+database "db.sqlite3" as db
+
+settings --> urls
+urls --> acceso_urls
+urls --> usuarios_urls
+urls --> ubicacion_urls
+urls --> sucursales_urls
+urls --> productos_urls
+urls --> compras_urls
+urls --> inventario_urls
+urls --> ventas_urls
+urls --> reportes_urls
+urls --> dashboard_urls
+
+acceso_views --> acceso_models
+usuarios_views --> usuarios_models
+ubicacion_views --> ubicacion_models
+sucursales_views --> sucursales_models
+productos_views --> productos_models
+compras_views --> compras_models
+inventario_views --> inventario_models
+ventas_views --> ventas_models
+
+inventario_models --> db
+sucursales_models --> db
+productos_models --> db
+compras_models --> db
+ventas_models --> db
+usuarios_models --> db
+acceso_models --> db
+
+templates --> base_template
+
+@enduml

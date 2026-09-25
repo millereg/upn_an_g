@@ -1,0 +1,356 @@
+@startuml
+skinparam classAttributeIconSize 0
+hide empty members
+
+package "ventas" {
+
+  class Venta {
+    - id: Integer
+    - tipo_documento: String
+    - numero_documento: String
+    - estado: String
+    - sucursal: Sucursal
+    - almacen: Almacen
+    - creado_por: User
+    - fecha_creacion: DateTime
+    --
+    + registrar(): Venta
+    + calcularTotal(): Decimal
+    + agregarDetalle(producto, cantidad, precio): DetalleVenta
+    + anular(): void
+    + confirmar(): void
+    + getEstado(): String
+    + __str__(): String
+  }
+
+  class DetalleVenta {
+    - id: Integer
+    - venta: Venta
+    - lote: Lote
+    - cantidad: Integer
+    - precio: Decimal
+    --
+    + getSubtotal(): Decimal
+    + actualizarCantidad(cantidad): void
+    + __str__(): String
+  }
+}
+
+package "inventario" {
+
+  class Inventario {
+    - id: Integer
+    - almacen: Almacen
+    - lote: Lote
+    - cantidad: Integer
+    --
+    + getStockActual(): Integer
+    + actualizarStock(cantidad): void
+    + incrementar(cantidad): void
+    + decrementar(cantidad): void
+    + tieneStock(cantidad): Boolean
+    + __str__(): String
+  }
+
+  class Movimiento {
+    - id: Integer
+    - tipo: String
+    - almacen: Almacen
+    - almacen_destino: Almacen
+    - referencia: String
+    - fecha: DateTime
+    - estado: String
+    --
+    + registrar(): Movimiento
+    + confirmar(): void
+    + anular(): void
+    + esEntrada(): Boolean
+    + esSalida(): Boolean
+    + esTransferencia(): Boolean
+    + __str__(): String
+  }
+
+  class DetalleMovimiento {
+    - id: Integer
+    - movimiento: Movimiento
+    - lote: Lote
+    - cantidad: Integer
+    --
+    + getCantidad(): Integer
+    + __str__(): String
+  }
+}
+
+package "compras" {
+
+  class Proveedor {
+    - id: Integer
+    - nombre: String
+    - tipo_documento: String
+    - documento: String
+    - pais: Pais
+    - departamento: Departamento
+    - provincia: Provincia
+    - ciudad: Ciudad
+    - direccion: String
+    - telefono: String
+    - celular: String
+    - correo: String
+    - estado: String
+    --
+    + estaActivo(): Boolean
+    + getDireccionCompleta(): String
+    + __str__(): String
+  }
+
+  class Compra {
+    - id: Integer
+    - proveedor: Proveedor
+    - almacen: Almacen
+    - tipo_documento: String
+    - numero_documento: String
+    - estado: String
+    - creado_por: User
+    - fecha_creacion: DateTime
+    --
+    + registrar(): Compra
+    + calcularTotal(): Decimal
+    + confirmar(): void
+    + anular(): void
+    + agregarDetalle(producto, lote, cantidad, precio): DetalleCompra
+    + __str__(): String
+  }
+
+  class DetalleCompra {
+    - id: Integer
+    - compra: Compra
+    - producto: Producto
+    - lote: Lote
+    - cantidad: Integer
+    - precio: Decimal
+    --
+    + getSubtotal(): Decimal
+    + __str__(): String
+  }
+}
+
+package "productos" {
+
+  class Categoria {
+    - id: Integer
+    - nombre: String
+    - estado: String
+    --
+    + estaActivo(): Boolean
+    + __str__(): String
+  }
+
+  class Producto {
+    - id: Integer
+    - referencia: String
+    - nombre: String
+    - categoria: Categoria
+    - codigo_barra: String
+    - requiere_receta: Boolean
+    - precio: Decimal
+    - estado: String
+    --
+    + estaActivo(): Boolean
+    + getPrecioFormateado(): String
+    + requiereReceta(): Boolean
+    + __str__(): String
+  }
+
+  class Lote {
+    - id: Integer
+    - producto: Producto
+    - proveedor: Proveedor
+    - numero_lote: String
+    - fecha_vencimiento: Date
+    - registro_sanitario: String
+    - estado: String
+    --
+    + estaVencido(): Boolean
+    + estaActivo(): Boolean
+    + diasParaVencimiento(): Integer
+    + __str__(): String
+  }
+}
+
+package "sucursales" {
+
+  class Sucursal {
+    - id: Integer
+    - nombre: String
+    - codigo: String
+    - pais: Pais
+    - departamento: Departamento
+    - provincia: Provincia
+    - ciudad: Ciudad
+    - direccion: String
+    - referencia: String
+    - telefono: String
+    - celular: String
+    - correo: String
+    - estado: String
+    --
+    + estaActiva(): Boolean
+    + getDireccionCompleta(): String
+    + __str__(): String
+  }
+
+  class Almacen {
+    - id: Integer
+    - sucursal: Sucursal
+    - nombre: String
+    - tipo: String
+    - capacidad: Integer
+    - estado: String
+    --
+    + estaActivo(): Boolean
+    + getCapacidadDisponible(stockActual): Integer
+    + tieneCapacidadPara(cantidad, stockActual): Boolean
+    + esPrincipal(): Boolean
+    + __str__(): String
+  }
+}
+
+package "ubicacion" {
+
+  class Pais {
+    - id: Integer
+    - nombre: String
+    - codigo: String
+    --
+    + __str__(): String
+  }
+
+  class Departamento {
+    - id: Integer
+    - nombre: String
+    - pais: Pais
+    --
+    + __str__(): String
+  }
+
+  class Provincia {
+    - id: Integer
+    - nombre: String
+    - departamento: Departamento
+    --
+    + __str__(): String
+  }
+
+  class Ciudad {
+    - id: Integer
+    - nombre: String
+    - provincia: Provincia
+    --
+    + __str__(): String
+  }
+}
+
+package "usuarios" {
+
+  class Perfil {
+    - id: Integer
+    - user: User
+    - sucursal: Sucursal
+    - telefono: String
+    - celular: String
+    - direccion: String
+    - foto: Image
+    --
+    + getNombreCompleto(): String
+    + getTelefono(): String
+    + __str__(): String
+  }
+}
+
+package "acceso" {
+
+  class Modulo {
+    - id: Integer
+    - nombre: String
+    - codigo: String
+    - icono: String
+    - url: String
+    - grupo_menu: String
+    - orden: Integer
+    - estado: String
+    - padre: Modulo
+    --
+    + esActivo(): Boolean
+    + esHijo(): Boolean
+    + tienePadre(): Boolean
+    + __str__(): String
+  }
+
+  class TipoPermiso {
+    - id: Integer
+    - nombre: String
+    - codigo: String
+    - orden: Integer
+    --
+    + __str__(): String
+  }
+
+  class PermisoModulo {
+    - id: Integer
+    - grupo: Group
+    - modulo: Modulo
+    - permiso: TipoPermiso
+    --
+    + __str__(): String
+  }
+}
+
+' === RELACIONES ===
+
+Venta "1" --> "*" DetalleVenta : contiene
+DetalleVenta "N" --> "1" Lote : referencia
+Venta "N" --> "1" Almacen : sale_de
+Venta "N" --> "1" Sucursal : pertenece
+
+Inventario "N" --> "1" Almacen : almacenado_en
+Inventario "N" --> "1" Lote : corresponde_a
+
+Movimiento "1" --> "*" DetalleMovimiento : detalle
+DetalleMovimiento "N" --> "1" Lote : mueve
+Movimiento "N" --> "1" Almacen : origen
+Movimiento "N" --> "0..1" Almacen : destino
+
+Compra "1" --> "*" DetalleCompra : contiene
+DetalleCompra "N" --> "1" Producto : referencia
+DetalleCompra "N" --> "1" Lote : referencia
+Compra "N" --> "1" Proveedor : proveedor
+Compra "N" --> "1" Almacen : ingresa_a
+
+Proveedor "1" --> "*" Lote : suministra
+
+Producto "1" --> "*" Lote : tiene
+Producto "N" --> "1" Categoria : pertenece
+
+Categoria "1" --> "*" Producto : contiene
+
+Almacen "N" --> "1" Sucursal : pertenece
+Sucursal "1" --> "*" Almacen : tiene
+
+Sucursal "N" --> "1" Pais : pais
+Sucursal "N" --> "1" Departamento : departamento
+Sucursal "N" --> "1" Provincia : provincia
+Sucursal "N" --> "1" Ciudad : ciudad
+
+Departamento "1" --> "1" Pais : pais
+Provincia "1" --> "1" Departamento : departamento
+Ciudad "1" --> "1" Provincia : provincia
+
+Perfil "1" --> "1" User : usuario
+Perfil "N" --> "0..1" Sucursal : trabaja_en
+
+Modulo "1" o--> "0..1" Modulo : padre
+Modulo "1" --> "*" PermisoModulo : tiene
+PermisoModulo "N" --> "1" TipoPermiso : tipo
+PermisoModulo "N" --> "1" Group : grupo
+
+@enduml

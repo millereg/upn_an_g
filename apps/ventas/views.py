@@ -37,7 +37,8 @@ def venta_create(request):
                     almacen=venta.almacen,
                     referencia=venta.numero_documento,
                     fecha=timezone.now(),
-                    estado='confirmado'
+                    estado='confirmado',
+                    creado_por=request.user
                 )
 
                 for detalle_form in formset:
@@ -81,13 +82,34 @@ def venta_update(request, id):
         extra=0,
         can_delete=True
     )
+
     if request.method == 'POST':
         form = VentaForm(request.POST, instance=venta)
         formset = DetalleFormSet(request.POST, instance=venta)
+
         if form.is_valid():
             if formset.is_valid():
-                form.save()
+                venta_original = Venta.objects.get(id=id)
+
+                stock_anterior = {}
+                for detalle in venta_original.detalleventa_set.all():
+                    stock_anterior[detalle.lote.id] = detalle.cantidad
+                    inv = Inventario.objects.filter(almacen=venta_original.almacen, lote=detalle.lote).first()
+                    if inv:
+                        inv.cantidad += detalle.cantidad
+                        inv.save()
+
+                venta = form.save()
                 formset.save()
+
+                stock_nuevo = {}
+                for detalle in venta.detalleventa_set.all():
+                    stock_nuevo[detalle.lote.id] = detalle.cantidad
+                    inv = Inventario.objects.filter(almacen=venta.almacen, lote=detalle.lote).first()
+                    if inv:
+                        inv.cantidad = max(0, inv.cantidad - detalle.cantidad)
+                        inv.save()
+
                 messages.success(request, 'Venta actualizada exitosamente.')
                 return redirect('ventas:venta_list')
     else:
@@ -102,6 +124,7 @@ def venta_update(request, id):
 
 @login_required
 def venta_delete(request, id):
+    """Anula una venta y restaura el stock"""
     venta = get_object_or_404(Venta, id=id)
     if request.method == 'POST':
         Movimiento.objects.filter(referencia=venta.numero_documento, tipo='salida').delete()
@@ -114,5 +137,35 @@ def venta_delete(request, id):
                 inv.cantidad += cantidad
                 inv.save()
 
-        venta.delete()
+        venta.estado = 'cancelado'
+        venta.save()
+        messages.success(request, f'Venta {venta.numero_documento} anulada exitosamente.')
     return redirect('ventas:venta_list')
+
+
+@login_required
+def venta_anular(request, id):
+    """Vista alternativa para anular venta con confirmación"""
+    venta = get_object_or_404(Venta, id=id)
+
+    if request.method == 'POST':
+        if venta.estado == 'cancelado':
+            messages.error(request, 'La venta ya está anulada.')
+            return redirect('ventas:venta_list')
+
+        Movimiento.objects.filter(referencia=venta.numero_documento, tipo='salida').delete()
+
+        for detalle in venta.detalleventa_set.all():
+            lote = detalle.lote
+            cantidad = detalle.cantidad
+            inv = Inventario.objects.filter(almacen=venta.almacen, lote=lote).first()
+            if inv:
+                inv.cantidad += cantidad
+                inv.save()
+
+        venta.estado = 'cancelado'
+        venta.save()
+        messages.success(request, f'Venta {venta.numero_documento} anulada. Stock restaurado.')
+        return redirect('ventas:venta_list')
+
+    return render(request, 'ventas/venta_anular_confirm.html', {'venta': venta})

@@ -1,0 +1,224 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+package "Django Auth" {
+    class User {
+        + id: Integer
+        + username: String
+        + email: String
+        + password: String
+    }
+}
+
+package "usuarios" {
+    class Perfil {
+        + telefono: String
+        + celular: String
+        + direccion: String
+        + foto: Image
+    }
+}
+
+package "ubicacion" {
+    class Pais {
+        + id: Integer
+        + nombre: String
+        + codigo: String
+    }
+
+    class Departamento {
+        + id: Integer
+        + nombre: String
+    }
+
+    class Provincia {
+        + id: Integer
+        + nombre: String
+    }
+
+    class Ciudad {
+        + id: Integer
+        + nombre: String
+    }
+}
+
+package "sucursales" {
+    class Sucursal {
+        + id: Integer
+        + nombre: String
+        + codigo: String
+        + direccion: String
+        + referencia: String
+        + telefono: String
+        + celular: String
+        + correo: String
+        + estado: String
+    }
+
+    class Almacen {
+        + id: Integer
+        + nombre: String
+        + tipo: String
+        + capacidad: Integer
+        + estado: String
+    }
+}
+
+package "productos" {
+    class Categoria {
+        + id: Integer
+        + nombre: String
+        + estado: String
+    }
+
+    class Producto {
+        + id: Integer
+        + referencia: String
+        + nombre: String
+        + codigo_barra: String
+        + requiere_receta: Boolean
+        + precio: Decimal
+        + estado: String
+    }
+
+    class Lote {
+        + id: Integer
+        + numero_lote: String
+        + fecha_vencimiento: Date
+        + registro_sanitario: String
+        + estado: String
+    }
+}
+
+package "compras" {
+    class Proveedor {
+        + id: Integer
+        + nombre: String
+        + tipo_documento: String
+        + documento: String
+        + direccion: String
+        + telefono: String
+        + celular: String
+        + correo: String
+        + estado: String
+    }
+
+    class Compra {
+        + id: Integer
+        + tipo_documento: String
+        + numero_documento: String
+        + estado: String
+    }
+
+    class DetalleCompra {
+        + id: Integer
+        + cantidad: Integer
+        + precio: Decimal
+    }
+}
+
+package "ventas" {
+    class Venta {
+        + id: Integer
+        + tipo_documento: String
+        + numero_documento: String
+        + estado: String
+    }
+
+    class DetalleVenta {
+        + id: Integer
+        + cantidad: Integer
+        + precio: Decimal
+    }
+}
+
+package "inventario" {
+    class Inventario {
+        + id: Integer
+        + cantidad: Integer
+    }
+
+    class Movimiento {
+        + id: Integer
+        + tipo: String
+        + referencia: String
+        + fecha: DateTime
+        + estado: String
+    }
+
+    class DetalleMovimiento {
+        + id: Integer
+        + cantidad: Integer
+    }
+}
+
+package "acceso" {
+    class Modulo {
+        + id: Integer
+        + nombre: String
+        + codigo: String
+        + icono: String
+        + url: String
+        + grupo_menu: String
+        + orden: Integer
+        + estado: String
+    }
+
+    class TipoPermiso {
+        + id: Integer
+        + nombre: String
+        + codigo: String
+        + orden: Integer
+    }
+
+    class PermisoModulo {
+        + id: Integer
+    }
+}
+
+' === RELACIONES ===
+
+User "1" --o "1" Perfil : 1:1
+User "1" --o "*" Sucursal : crea
+User "1" --o "*" Venta : crea
+User "1" --o "*" Compra : crea
+User "1" --o "*" Movimiento : crea
+User "1" --o "*" Almacen : crea
+
+Perfil "N" o-- "1" Sucursal : tiene
+
+Pais "1" --o "*" Departamento : tiene
+Departamento "1" --o "*" Provincia : tiene
+Provincia "1" --o "*" Ciudad : tiene
+
+Sucursal "1" --o "*" Almacen : tiene
+Sucursal "N" --o "*" Venta : realiza
+Sucursal "N" --o "*" Compra : recibe
+
+Categoria "1" --o "*" Producto : contiene
+Producto "1" --o "*" Lote : tiene
+
+Lote "N" --o "1" Proveedor : proviene_de
+
+Compra "1" --o "*" DetalleCompra : contiene
+DetalleCompra "N" --o "1" Producto : referencia
+DetalleCompra "N" --o "1" Lote : referencia
+
+Venta "1" --o "*" DetalleVenta : contiene
+DetalleVenta "N" --o "1" Lote : referencia
+
+Inventario "N" --o "1" Almacen : almacenado_en
+Inventario "N" --o "1" Lote : corresponde_a
+
+Movimiento "1" --o "*" DetalleMovimiento : detalle
+DetalleMovimiento "N" --o "1" Lote : mueve
+Movimiento "N" o-- "1" Almacen : origen
+Movimiento "N" o-- "0..1" Almacen : destino
+
+Modulo "1" o-- "0..1" Modulo : padre_hijo
+Modulo "1" --o "*" PermisoModulo : tiene
+
+PermisoModulo "N" --o "1" TipoPermiso : tipo
+PermisoModulo "N" --o "1" Group : grupo
+
+@enduml

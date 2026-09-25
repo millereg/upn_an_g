@@ -69,6 +69,11 @@
                             </a>
                             {% endif %}
                             {% if can_delete %}
+                            {% if venta.estado != 'cancelado' %}
+                            <a href="{% url 'ventas:venta_anular' venta.id %}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-ban"></i>
+                            </a>
+                            {% endif %}
                             <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteModal{{ venta.id }}">
                                 <i class="fas fa-trash"></i>
                             </button>

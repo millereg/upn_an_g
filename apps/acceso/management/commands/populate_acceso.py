@@ -1,9 +1,8 @@
-from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group
+from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from apps.acceso.models import Modulo, TipoPermiso, PermisoModulo
-
+from apps.acceso.models import Modulo, PermisoModulo, TipoPermiso
 
 MODULOS = [
     # Inicio

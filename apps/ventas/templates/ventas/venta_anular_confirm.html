@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Confirmar Anulación de Venta</h6>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-warning">
+            <h4 class="alert-heading">¿Está seguro de anular esta venta?</h4>
+            <p>Esta acción restaurará el stock de los productos involucrados.</p>
+            <hr>
+            <p class="mb-0">
+                <strong>Número de Documento:</strong> {{ venta.numero_documento }}<br>
+                <strong>Tipo:</strong> {{ venta.tipo_documento }}<br>
+                <strong>Fecha:</strong> {{ venta.fecha_creacion|date:"d/m/Y H:i" }}<br>
+                <strong>Estado actual:</strong>
+                {% if venta.estado == 'cancelado' %}
+                    <span class="badge badge-danger">Cancelado</span>
+                {% else %}
+                    <span class="badge badge-success">{{ venta.estado|title }}</span>
+                {% endif %}
+            </p>
+        </div>
+
+        <h5>Productos en la venta:</h5>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Lote</th>
+                    <th>Cantidad</th>
+                    <th>Precio</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detalle in venta.detalleventa_set.all %}
+                <tr>
+                    <td>{{ detalle.lote.producto.nombre }}</td>
+                    <td>{{ detalle.lote.numero_lote }}</td>
+                    <td>{{ detalle.cantidad }}</td>
+                    <td>S/ {{ detalle.precio }}</td>
+                    <td>S/ {{ detalle.get_subtotal|default:"0.00" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="btn-group">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-times"></i> Confirmar Anulación
+                </button>
+                <a href="{% url 'ventas:venta_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

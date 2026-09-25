@@ -26,3 +26,7 @@ Thumbs.db
 
 # Archivos temporales
 *.swp
+
+# Archivos de configuración
+requirements.txt
+requirements_tests.txt
