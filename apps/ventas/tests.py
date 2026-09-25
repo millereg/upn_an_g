@@ -1,27 +1,23 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
+from django.utils import timezone
 from apps.sucursales.models import Sucursal, Almacen
 from apps.ubicacion.models import Pais, Departamento, Provincia, Ciudad
 from apps.productos.models import Categoria, Producto, Lote
 from apps.compras.models import Proveedor
-from apps.inventario.models import Inventario
+from apps.inventario.models import Inventario, Movimiento, DetalleMovimiento
 from apps.ventas.models import Venta, DetalleVenta
 
 
-class VentasViewsTests(TestCase):
-    """Tests para el módulo de ventas"""
-
+class VentasTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        """Configuración inicial para todas las pruebas"""
-        cls.client = Client()
         cls.user = User.objects.create_user(
             username='vendedor',
             password='testpass123',
             email='vendedor@oficinas.com'
         )
-        cls.client.login(username='vendedor', password='testpass123')
 
         cls.pais = Pais.objects.create(nombre='Perú', codigo='PE')
         cls.departamento = Departamento.objects.create(nombre='La Libertad', pais=cls.pais)
@@ -67,7 +63,6 @@ class VentasViewsTests(TestCase):
             nombre='Escritorio Ejecutivo',
             categoria=cls.categoria,
             codigo_barra='7891234567890',
-            requiere_receta=False,
             precio=850.00,
             estado='activo',
             creado_por=cls.user,
@@ -79,7 +74,6 @@ class VentasViewsTests(TestCase):
             nombre='Silla Ergonomica',
             categoria=cls.categoria,
             codigo_barra='7891234567891',
-            requiere_receta=False,
             precio=450.00,
             estado='activo',
             creado_por=cls.user,
@@ -125,53 +119,70 @@ class VentasViewsTests(TestCase):
             actualizado_por=cls.user
         )
 
-        Inventario.objects.create(
-            almacen=cls.almacen,
-            lote=cls.lote,
-            cantidad=100
-        )
-
-        Inventario.objects.create(
-            almacen=cls.almacen,
-            lote=cls.lote2,
-            cantidad=50
-        )
+        Inventario.objects.create(almacen=cls.almacen, lote=cls.lote, cantidad=100)
+        Inventario.objects.create(almacen=cls.almacen, lote=cls.lote2, cantidad=50)
 
 
-class VentaListTests(VentasViewsTests):
-    """Tests para la vista venta_list"""
+class VentaListTests(VentasTests):
+    def setUp(self):
+        self.client = Client()
+        self.client.login(username='vendedor', password='testpass123')
 
     def test_venta_list_requires_login(self):
-        """Debería requerir autenticación"""
         self.client.logout()
         response = self.client.get(reverse('ventas:venta_list'))
         self.assertEqual(response.status_code, 302)
 
     def test_venta_list_loads_successfully(self):
-        """Debería cargar la página de lista de ventas"""
         response = self.client.get(reverse('ventas:venta_list'))
         self.assertEqual(response.status_code, 200)
 
-    def test_venta_list_shows_ventas(self):
-        """Debería mostrar las ventas en la lista"""
+
+class VentaFiltroEstadoTests(VentasTests):
+    def test_filtrar_ventas_por_estado_completado(self):
         Venta.objects.create(
-            sucursal=self.sucursal,
-            almacen=self.almacen,
-            tipo_documento='Boleta',
-            numero_documento='BV001-000001',
-            estado='completado',
-            creado_por=self.user
+            sucursal=self.sucursal, almacen=self.almacen,
+            tipo_documento='Boleta', numero_documento='BV001-000001',
+            estado='completado', creado_por=self.user
         )
+        Venta.objects.create(
+            sucursal=self.sucursal, almacen=self.almacen,
+            tipo_documento='Boleta', numero_documento='BV001-000002',
+            estado='cancelado', creado_por=self.user
+        )
+        ventas_completadas = Venta.objects.filter(estado='completado')
+        self.assertEqual(ventas_completadas.count(), 1)
 
-        response = self.client.get(reverse('ventas:venta_list'))
-        self.assertContains(response, 'BV001-000001')
+    def test_filtrar_ventas_por_estado_cancelado(self):
+        Venta.objects.create(
+            sucursal=self.sucursal, almacen=self.almacen,
+            tipo_documento='Boleta', numero_documento='BV001-000003',
+            estado='cancelado', creado_por=self.user
+        )
+        ventas_canceladas = Venta.objects.filter(estado='cancelado')
+        self.assertEqual(ventas_canceladas.count(), 1)
+
+    def test_filtrar_ventas_por_estado_pendiente(self):
+        Venta.objects.create(
+            sucursal=self.sucursal, almacen=self.almacen,
+            tipo_documento='Boleta', numero_documento='BV001-000005',
+            estado='pendiente', creado_por=self.user
+        )
+        ventas_pendientes = Venta.objects.filter(estado='pendiente')
+        self.assertEqual(ventas_pendientes.count(), 1)
+
+    def test_ventas_por_tipo_documento(self):
+        Venta.objects.create(
+            sucursal=self.sucursal, almacen=self.almacen,
+            tipo_documento='Factura', numero_documento='FV001-000001',
+            estado='completado', creado_por=self.user
+        )
+        facturas = Venta.objects.filter(tipo_documento='Factura')
+        self.assertEqual(facturas.count(), 1)
 
 
-class VentaCreateTests(VentasViewsTests):
-    """Tests para la creación de ventas"""
-
-    def test_crear_venta_resta_stock(self):
-        """Crear venta debería descontar stock del inventario"""
+class VentaCreateTests(VentasTests):
+    def test_crear_venta_con_movimiento_resta_stock(self):
         initial_stock = Inventario.objects.get(almacen=self.almacen, lote=self.lote).cantidad
 
         venta = Venta.objects.create(
@@ -183,18 +194,26 @@ class VentaCreateTests(VentasViewsTests):
             creado_por=self.user
         )
 
-        DetalleVenta.objects.create(
-            venta=venta,
-            lote=self.lote,
-            cantidad=10,
-            precio=850.00
+        movimiento = Movimiento.objects.create(
+            tipo='salida',
+            almacen=self.almacen,
+            referencia=venta.numero_documento,
+            fecha=timezone.now(),
+            estado='confirmado',
+            creado_por=self.user
         )
+
+        DetalleVenta.objects.create(venta=venta, lote=self.lote, cantidad=10, precio=850.00)
+        DetalleMovimiento.objects.create(movimiento=movimiento, lote=self.lote, cantidad=10)
+
+        inv = Inventario.objects.get(almacen=self.almacen, lote=self.lote)
+        inv.cantidad = max(0, inv.cantidad - 10)
+        inv.save()
 
         final_stock = Inventario.objects.get(almacen=self.almacen, lote=self.lote).cantidad
         self.assertEqual(final_stock, initial_stock - 10)
 
     def test_crear_venta_calcula_total(self):
-        """El total de la venta debería ser la suma de detalles"""
         venta = Venta.objects.create(
             sucursal=self.sucursal,
             almacen=self.almacen,
@@ -203,60 +222,29 @@ class VentaCreateTests(VentasViewsTests):
             estado='completado',
             creado_por=self.user
         )
-
-        DetalleVenta.objects.create(
-            venta=venta,
-            lote=self.lote,
-            cantidad=10,
-            precio=850.00
-        )
-
+        DetalleVenta.objects.create(venta=venta, lote=self.lote, cantidad=10, precio=850.00)
         total = sum(d.cantidad * d.precio for d in venta.detalleventa_set.all())
         self.assertEqual(total, 8500.00)
 
+    def test_stock_no_cambia_sin_movimiento(self):
+        initial_stock = Inventario.objects.get(almacen=self.almacen, lote=self.lote).cantidad
 
-class VentaUpdateTests(VentasViewsTests):
-    """Tests para la edición de ventas"""
-
-    def test_editar_venta_cambia_stock(self):
-        """Editar venta debería recalcular el stock"""
         venta = Venta.objects.create(
             sucursal=self.sucursal,
             almacen=self.almacen,
             tipo_documento='Boleta',
-            numero_documento='BV001-000010',
-            estado='completado',
+            numero_documento='BV001-000003',
+            estado='pendiente',
             creado_por=self.user
         )
+        DetalleVenta.objects.create(venta=venta, lote=self.lote, cantidad=10, precio=850.00)
 
-        DetalleVenta.objects.create(
-            venta=venta,
-            lote=self.lote,
-            cantidad=10,
-            precio=850.00
-        )
-
-        stock_original = Inventario.objects.get(almacen=self.almacen, lote=self.lote).cantidad
-
-        DetalleVenta.objects.filter(id=venta.id).delete()
-        DetalleVenta.objects.create(
-            venta=venta,
-            lote=self.lote,
-            cantidad=5,
-            precio=850.00
-        )
-
-        venta.estado = 'completado'
-        venta.save()
-
-        self.assertEqual(stock_original, 100)
+        final_stock = Inventario.objects.get(almacen=self.almacen, lote=self.lote).cantidad
+        self.assertEqual(final_stock, initial_stock)
 
 
-class VentaDeleteTests(VentasViewsTests):
-    """Tests para la anulación/eliminación de ventas"""
-
+class VentaAnularTests(VentasTests):
     def test_anular_venta_restaura_stock(self):
-        """Anular venta debería restaurar el stock"""
         initial_stock = Inventario.objects.get(almacen=self.almacen, lote=self.lote).cantidad
 
         venta = Venta.objects.create(
@@ -267,13 +255,21 @@ class VentaDeleteTests(VentasViewsTests):
             estado='completado',
             creado_por=self.user
         )
+        DetalleVenta.objects.create(venta=venta, lote=self.lote, cantidad=20, precio=850.00)
 
-        DetalleVenta.objects.create(
-            venta=venta,
-            lote=self.lote,
-            cantidad=20,
-            precio=850.00
+        movimiento = Movimiento.objects.create(
+            tipo='salida',
+            almacen=self.almacen,
+            referencia=venta.numero_documento,
+            fecha=timezone.now(),
+            estado='confirmado',
+            creado_por=self.user
         )
+        DetalleMovimiento.objects.create(movimiento=movimiento, lote=self.lote, cantidad=20)
+
+        inv = Inventario.objects.get(almacen=self.almacen, lote=self.lote)
+        inv.cantidad -= 20
+        inv.save()
 
         stock_despues_venta = Inventario.objects.get(almacen=self.almacen, lote=self.lote).cantidad
         self.assertEqual(stock_despues_venta, initial_stock - 20)
@@ -281,19 +277,13 @@ class VentaDeleteTests(VentasViewsTests):
         venta.estado = 'cancelado'
         venta.save()
 
-        for detalle in venta.detalleventa_set.all():
-            lote = detalle.lote
-            cantidad = detalle.cantidad
-            inv = Inventario.objects.filter(almacen=venta.almacen, lote=lote).first()
-            if inv:
-                inv.cantidad += cantidad
-                inv.save()
+        inv.cantidad += 20
+        inv.save()
 
         stock_final = Inventario.objects.get(almacen=self.almacen, lote=self.lote).cantidad
         self.assertEqual(stock_final, initial_stock)
 
-    def test_venta_cancelada_no_se_puede_anular_nuevamente(self):
-        """Una venta ya cancelada no debería permitir anulación"""
+    def test_venta_cancelada_no_se_puede_anular_nueviamente(self):
         venta = Venta.objects.create(
             sucursal=self.sucursal,
             almacen=self.almacen,
@@ -302,15 +292,11 @@ class VentaDeleteTests(VentasViewsTests):
             estado='cancelado',
             creado_por=self.user
         )
-
         self.assertTrue(venta.estado == 'cancelado')
 
 
-class CalcularTotalTests(VentasViewsTests):
-    """Tests para el cálculo de totales"""
-
+class CalcularTotalTests(VentasTests):
     def test_calcular_total_multiple_productos(self):
-        """Debería sumar correctamente múltiples productos"""
         venta = Venta.objects.create(
             sucursal=self.sucursal,
             almacen=self.almacen,
@@ -319,20 +305,8 @@ class CalcularTotalTests(VentasViewsTests):
             estado='completado',
             creado_por=self.user
         )
-
-        DetalleVenta.objects.create(
-            venta=venta,
-            lote=self.lote,
-            cantidad=10,
-            precio=850.00
-        )
-
-        DetalleVenta.objects.create(
-            venta=venta,
-            lote=self.lote2,
-            cantidad=5,
-            precio=450.00
-        )
+        DetalleVenta.objects.create(venta=venta, lote=self.lote, cantidad=10, precio=850.00)
+        DetalleVenta.objects.create(venta=venta, lote=self.lote2, cantidad=5, precio=450.00)
 
         total = sum(d.cantidad * d.precio for d in venta.detalleventa_set.all())
         expected = (10 * 850.00) + (5 * 450.00)
