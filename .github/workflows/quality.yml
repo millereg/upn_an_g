@@ -1,0 +1,63 @@
+name: Quality CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Verificar configuración Django
+        run: python manage.py check
+
+      - name: Verificar migraciones
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Ejecutar pruebas
+        run: pytest -v --tb=short
+
+      - name: Generar cobertura
+        run: |
+          coverage run --source=apps -m pytest
+          coverage report -m
+          coverage xml -o coverage.xml
+
+      - name: Ejecutar análisis estático
+        run: ruff check apps inventario_upn_g --output-format concise
+
+      - name: Ejecutar análisis de seguridad
+        run: bandit -r apps inventario_upn_g -f screen -ll
+
+      - name: Publicar reporte de cobertura
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: |
+            coverage.xml
+            .coverage
+          if-no-files-found: ignore
